@@ -2691,8 +2691,10 @@ const MAP_STYLES_OSM={
   // Satelit: imagery gratis Esri (tanpa key) + layer label/jalan/batas di atasnya → hybrid
   satellite: osmRasterStyleMulti([
     { id:'imagery', tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] },
-    { id:'labels',  tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'] },
-  ], 'Esri, Maxar, Earthstar Geographics'),
+    // Label dari CARTO (basis data OSM) — coverage jalan/nama desa jauh lebih
+    // lengkap drpd layer reference Esri yg nyaris kosong di luar kota besar/US.
+    { id:'labels',  tiles:['https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png'] },
+  ], 'Esri, Maxar, Earthstar Geographics · © OpenStreetMap contributors © CARTO'),
 };
 function getMapStyle(name){ return (MAP_PROVIDER==='osm' ? MAP_STYLES_OSM : MAP_STYLES_MAPBOX)[name]; }
 function canInitMap(){ return MAP_PROVIDER==='osm' || !!MAPBOX_TOKEN; }
