@@ -383,9 +383,9 @@ body.light .ble-log{box-shadow:none}
 
 /* Send toast */
 .send-toast{
-  position:absolute;top:70px;left:50%;transform:translateX(-50%);
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
   background:rgba(0,200,83,.9);color:#000;border-radius:10px;
-  padding:8px 16px;font-size:12px;font-weight:700;z-index:30;
+  padding:8px 16px;font-size:12px;font-weight:700;z-index:99990;
   white-space:nowrap;pointer-events:none;
   transition:opacity .3s;
 }
@@ -4111,7 +4111,7 @@ function haversine(lat1,lng1,lat2,lng2){
 
 function showToast(msg){
   let t=document.querySelector('.send-toast');
-  if(!t){t=document.createElement('div');t.className='send-toast';document.getElementById('screen-navigasi').appendChild(t);}
+  if(!t){t=document.createElement('div');t.className='send-toast';document.body.appendChild(t);}
   t.textContent=msg; t.style.opacity='1';
   setTimeout(()=>{t.style.opacity='0';},2200);
 }
