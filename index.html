@@ -573,7 +573,7 @@ body.light .ble-log{box-shadow:none}
       <div class="stat-sub" id="sohSub">SOH: —</div>
     </div>
     <div class="stat-card gg">
-      <div class="stat-label">Trip Jarak <span id="tripResetBtn" onclick="resetTrip()" style="float:right;cursor:pointer;text-decoration:underline;font-weight:600;text-transform:none;letter-spacing:0">Reset</span></div>
+      <div class="stat-label">Trip Jarak <span id="tripResetBtn" onclick="openResetTripModal()" style="float:right;cursor:pointer;text-decoration:underline;font-weight:600;text-transform:none;letter-spacing:0">Reset</span></div>
       <div class="stat-value" id="tripVal">0.0 km</div>
       <div class="stat-sub" id="spdSub">SPD: — km/h · ODO: — km</div>
     </div>
@@ -581,18 +581,23 @@ body.light .ble-log{box-shadow:none}
   <div class="energy-card">
     <div class="energy-row"><div class="energy-label">⚡ Sisa Energi</div><div class="energy-val" id="energyVal">— Wh</div></div>
     <div class="energy-row"><div class="energy-label">🛣️ Estimasi Jarak Tersisa</div><div class="energy-val" id="rangeVal" style="color:var(--green)">— km</div></div>
-    <div class="energy-row"><div class="energy-label">🔥 Daya Maks Trip</div><div class="energy-val" id="maxPowerLiveVal" style="font-size:12px;font-weight:500">— W</div></div>
-    <div class="energy-row"><div class="energy-label">♻️ Energi Regen</div><div class="energy-val" id="regenLiveVal" style="font-size:12px;font-weight:500;color:var(--teal)">— Wh (maks — W)</div></div>
-    <div class="energy-row"><div class="energy-label">🔌 Energi Charge</div><div class="energy-val" id="chargeLiveVal" style="font-size:12px;font-weight:500;color:var(--green)">— Wh</div></div>
     <div class="energy-row"><div class="energy-label">📊 Efisiensi</div><div class="energy-val" id="effVal" style="font-size:12px;font-weight:500;color:var(--muted)">— Wh/km</div></div>
-    <div class="energy-row"><div class="energy-label">🌱 CO₂ Hemat</div><div class="energy-val" id="co2SaveVal" style="font-size:12px;font-weight:500;color:#00e676">—</div></div>
-    <div class="energy-row"><div class="energy-label">💰 Biaya Listrik Trip</div><div class="energy-val" id="tripCostVal" style="font-size:12px;font-weight:700;color:#ffa726">—</div></div>
     <div class="energy-row" style="align-items:center">
       <div class="energy-label">🏆 Riding Score</div>
       <div style="display:flex;align-items:center;gap:6px">
         <div class="energy-val" id="ridingScoreVal" style="font-size:20px;font-weight:900">—</div>
         <div id="ridingScoreLbl" style="font-size:11px;color:var(--muted)">Belum ada data</div>
       </div>
+    </div>
+    <div id="energyDetailToggle" onclick="toggleEnergyDetail()" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 0 2px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer">
+      <span id="energyDetailToggleTxt">Lihat Detail</span><span id="energyDetailToggleArrow" style="font-size:9px;transition:transform .2s">▾</span>
+    </div>
+    <div id="energyDetailBody" style="display:none">
+      <div class="energy-row"><div class="energy-label">🔥 Daya Maks Trip</div><div class="energy-val" id="maxPowerLiveVal" style="font-size:12px;font-weight:500">— W</div></div>
+      <div class="energy-row"><div class="energy-label">♻️ Energi Regen</div><div class="energy-val" id="regenLiveVal" style="font-size:12px;font-weight:500;color:var(--teal)">— Wh (maks — W)</div></div>
+      <div class="energy-row"><div class="energy-label">🔌 Energi Charge</div><div class="energy-val" id="chargeLiveVal" style="font-size:12px;font-weight:500;color:var(--green)">— Wh</div></div>
+      <div class="energy-row"><div class="energy-label">🌱 CO₂ Hemat</div><div class="energy-val" id="co2SaveVal" style="font-size:12px;font-weight:500;color:#00e676">—</div></div>
+      <div class="energy-row"><div class="energy-label">💰 Biaya Listrik Trip</div><div class="energy-val" id="tripCostVal" style="font-size:12px;font-weight:700;color:#ffa726">—</div></div>
     </div>
   </div>
   <!-- ECO MODE -->
@@ -1181,6 +1186,18 @@ body.light .ble-log{box-shadow:none}
   </div>
 </div>
 
+<!-- MODAL: RESET TRIP CONFIRM -->
+<div class="modal-overlay" id="resetTripModal">
+  <div class="modal">
+    <h3>🔄 Reset Trip?</h3>
+    <p id="resetTripDesc">Trip saat ini akan disimpan ke riwayat, lalu jarak &amp; statistik trip dimulai dari 0 lagi.</p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal('resetTripModal')">BATAL</button>
+      <button class="modal-btn" onclick="confirmResetTrip()">RESET</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: SETTINGS -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
@@ -1496,6 +1513,30 @@ function toggleOverlay(){
   const el = document.getElementById('spdOverlay');
   el.style.opacity = overlayVisible ? '1' : '0';
   el.style.pointerEvents = overlayVisible ? 'none' : 'none';
+}
+
+// ── ENERGY CARD: detail expand/collapse ──
+function toggleEnergyDetail(){
+  const body = document.getElementById('energyDetailBody');
+  const txt = document.getElementById('energyDetailToggleTxt');
+  const arrow = document.getElementById('energyDetailToggleArrow');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  txt.textContent = open ? 'Sembunyikan Detail' : 'Lihat Detail';
+  arrow.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+  localStorage.setItem('energy_detail_open', open ? '1' : '0');
+}
+function loadEnergyDetailPref(){
+  if(localStorage.getItem('energy_detail_open') === '1'){
+    const body = document.getElementById('energyDetailBody');
+    const txt = document.getElementById('energyDetailToggleTxt');
+    const arrow = document.getElementById('energyDetailToggleArrow');
+    if(body){
+      body.style.display = 'block';
+      txt.textContent = 'Sembunyikan Detail';
+      arrow.style.transform = 'rotate(180deg)';
+    }
+  }
 }
 
 // ============================================================
@@ -2074,6 +2115,22 @@ function applyTripBaselineReset(){
   updateTripVal();
   updateRangeEstimate();
   updateLivePowerSummary();
+}
+
+function openResetTripModal(){
+  const dist = Math.max(0, motoData.odo - (tripStartOdo??motoData.odo));
+  const desc = document.getElementById('resetTripDesc');
+  if(dist > 0.05){
+    desc.textContent = `Trip saat ini (${dist.toFixed(1)} km) akan disimpan ke riwayat, lalu jarak & statistik trip dimulai dari 0 lagi.`;
+  } else {
+    desc.textContent = 'Jarak & statistik trip akan dimulai dari 0 lagi.';
+  }
+  document.getElementById('resetTripModal').classList.add('show');
+}
+
+function confirmResetTrip(){
+  closeModal('resetTripModal');
+  resetTrip();
 }
 
 function resetTrip(){
@@ -4465,23 +4522,30 @@ async function shareTrip(i){
   const t = getTripHistory()[i];
   if(!t) return;
   const d = new Date(t.date);
-  const W=640, H=900;
+
+  // Render di 2x lalu scale via canvas context — hasil PNG jauh lebih tajam di layar retina/HP modern
+  const SCALE = 2;
+  const W=640, H=924;
   const canvas = document.createElement('canvas');
-  canvas.width=W; canvas.height=H;
+  canvas.width = W*SCALE; canvas.height = H*SCALE;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
   const ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+  ctx.textBaseline = 'alphabetic';
 
   const grad = ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'#0d1117'); grad.addColorStop(1,'#1c2230');
+  grad.addColorStop(0,'#0d1117'); grad.addColorStop(1,'#1a2030');
   ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
 
-  ctx.fillStyle='#ff3d3d'; ctx.font='bold 26px Arial';
-  ctx.fillText('GESITS  TRIP  SUMMARY', 32, 50);
+  // ── HEADER ──
+  ctx.fillStyle='#ff5252'; ctx.font='800 28px Arial';
+  ctx.fillText('GESITS TRIP SUMMARY', 32, 52);
 
-  ctx.fillStyle='#7a8599'; ctx.font='14px Arial';
-  ctx.fillText(d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) + ' · ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}), 32, 76);
+  ctx.fillStyle='#aab2c5'; ctx.font='600 15px Arial';
+  ctx.fillText(d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) + ' · ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}), 32, 78);
 
-  // Peta bentuk rute (ala Strava)
-  const mapX=32, mapY=92, mapW=W-64, mapH=230;
+  // ── PETA RUTE ──
+  const mapX=32, mapY=96, mapW=W-64, mapH=230;
   ctx.save();
   const mr=16;
   ctx.beginPath();
@@ -4491,22 +4555,26 @@ async function shareTrip(i){
   ctx.lineTo(mapX+mr,mapY+mapH); ctx.quadraticCurveTo(mapX,mapY+mapH,mapX,mapY+mapH-mr);
   ctx.lineTo(mapX,mapY+mr); ctx.quadraticCurveTo(mapX,mapY,mapX+mr,mapY);
   ctx.closePath();
-  ctx.fillStyle='rgba(255,255,255,0.04)';
+  ctx.fillStyle='rgba(255,255,255,0.06)';
   ctx.fill();
   ctx.clip();
   const drawn = t.path && t.path.length>1 ? drawTripRouteShape(ctx, t.path, mapX, mapY, mapW, mapH) : false;
   if(!drawn){
-    ctx.fillStyle='#3a4356'; ctx.font='13px Arial'; ctx.textAlign='center';
+    ctx.fillStyle='#5a6478'; ctx.font='600 14px Arial'; ctx.textAlign='center';
     ctx.fillText('Rute tidak tercatat', mapX+mapW/2, mapY+mapH/2);
     ctx.textAlign='left';
   }
   ctx.restore();
 
-  ctx.fillStyle='#00e676'; ctx.font='bold 72px Rajdhani, Arial';
-  ctx.fillText(t.distance.toFixed(1)+' km', 32, 394);
-  ctx.fillStyle='#7a8599'; ctx.font='13px Arial';
-  ctx.fillText('TOTAL JARAK TRIP', 32, 417);
+  // ── JARAK BESAR ──
+  ctx.fillStyle='#00e676'; ctx.font='800 76px Rajdhani, Arial';
+  ctx.fillText(t.distance.toFixed(1)+' km', 32, 422);
+  ctx.fillStyle='#9aa3b8'; ctx.font='700 13px Arial';
+  ctx.save(); ctx.letterSpacing = '1px';
+  ctx.fillText('TOTAL JARAK TRIP', 32, 446);
+  ctx.restore();
 
+  // ── DATA ROWS ──
   const co2Saved = calcCO2Saving(t.distance, t.energyWh);
   const rows = [
     ['Kecepatan Rata-rata', t.avgSpeed.toFixed(0)+' km/h'],
@@ -4522,20 +4590,24 @@ async function shareTrip(i){
     ['💰 Biaya Listrik',    t.energyWh>0 ? 'Rp '+Math.round((t.costIDR||((t.energyWh/1000)*1447))).toLocaleString('id-ID') : '—'],
     ['🏆 Riding Score',     t.ridingScore!=null ? t.ridingScore+'/100'        : '—'],
   ];
-  let y = 452;
-  rows.forEach(r=>{
-    ctx.strokeStyle='#2a3347'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(32,y+14); ctx.lineTo(W-32,y+14); ctx.stroke();
-    ctx.fillStyle='#7a8599'; ctx.font='14px Arial'; ctx.textAlign='left';
+  let y = 480;
+  const rowH = 38;
+  rows.forEach((r,idx)=>{
+    // Background selang-seling: bantu pemisahan baris tanpa garis tipis yang hilang di kontras rendah
+    if(idx % 2 === 0){
+      ctx.fillStyle='rgba(255,255,255,0.025)';
+      ctx.fillRect(20, y-22, W-40, rowH);
+    }
+    ctx.fillStyle='#9aa3b8'; ctx.font='600 15px Arial'; ctx.textAlign='left';
     ctx.fillText(r[0], 32, y);
-    ctx.fillStyle='#e8eaf0'; ctx.font='bold 15px Arial'; ctx.textAlign='right';
+    ctx.fillStyle='#ffffff'; ctx.font='800 17px Arial'; ctx.textAlign='right';
     ctx.fillText(r[1], W-32, y);
     ctx.textAlign='left';
-    y += 36;
+    y += rowH;
   });
 
-  ctx.fillStyle='#7a8599'; ctx.font='12px Arial';
-  ctx.fillText('GESITS Dashboard PWA', 32, H-22);
+  ctx.fillStyle='#5a6478'; ctx.font='600 12px Arial';
+  ctx.fillText('GESITS Dashboard PWA', 32, H-20);
 
   canvas.toBlob(async (blob)=>{
     if(!blob) return;
@@ -5000,6 +5072,7 @@ setTimeout(drawChart,100);
 window.addEventListener('resize',drawChart);
 if(canInitMap()) setTimeout(initMap,500);
 loadSavedTheme();
+loadEnergyDetailPref();
 
 // Restore custom marker menu label on load
 (function(){
