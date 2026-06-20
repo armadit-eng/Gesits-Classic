@@ -998,6 +998,21 @@ body.light .ble-log{box-shadow:none}
     <div class="chart-bg" style="height:140px"><canvas id="statsEffChart" style="width:100%;height:100%;display:block"></canvas></div>
   </div>
 
+  <!-- HEATMAP RUTE FAVORIT -->
+  <div style="padding:0 14px 12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">🔥 Rute Favorit</div>
+      <div id="heatmapTripCount" style="font-size:10px;color:var(--muted)"></div>
+    </div>
+    <div style="position:relative;height:220px;border-radius:14px;overflow:hidden;background:#11161f">
+      <div id="heatmapContainer" style="width:100%;height:100%"></div>
+      <div id="heatmapEmptyState" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px;text-align:center;padding:0 24px">
+        <div style="font-size:26px">🗺️</div>
+        <div>Belum ada data rute.<br>Mulai riding untuk lihat rute favoritmu di sini.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- GAMIFIKASI -->
   <div style="padding:0 14px 10px">
     <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">🏆 Rider Level</div>
@@ -5363,6 +5378,7 @@ function renderStatsPage(){
 
   renderBmAlarms();
   renderBmChargeLog();
+  renderHeatmap();
 }
 
 function drawBmSohChart(hist){
@@ -5370,6 +5386,109 @@ function drawBmSohChart(hist){
   const labels = hist.map((_,i)=>i===0?'Awal':i===hist.length-1?'Kini':'');
   const vals = hist.map(h=>h.v);
   drawStatsChart('bmSohChart', labels, vals, '#ffa726', 'rgba(255,167,38,0.12)');
+}
+
+// ═══════════════════════════════════════════
+// HEATMAP RUTE FAVORIT (tab Stats)
+// ═══════════════════════════════════════════
+let heatmapInstance = null, heatmapInitialized = false;
+
+function buildHeatmapGeoJSON(){
+  const hist = getTripHistory();
+  const features = [];
+  hist.forEach(t=>{
+    if(!t.path || !t.path.length) return;
+    t.path.forEach(p=>{
+      // path tersimpan sebagai [lng, lat, ts] (lihat recordTripPoint)
+      if(Array.isArray(p) && p.length>=2 && Number.isFinite(p[0]) && Number.isFinite(p[1])){
+        features.push({ type:'Feature', geometry:{type:'Point', coordinates:[p[0],p[1]]}, properties:{} });
+      }
+    });
+  });
+  return { geojson: {type:'FeatureCollection', features}, tripCount: hist.filter(t=>t.path&&t.path.length).length, pointCount: features.length };
+}
+
+function renderHeatmap(){
+  const { geojson, tripCount, pointCount } = buildHeatmapGeoJSON();
+  const countEl = document.getElementById('heatmapTripCount');
+  if(countEl) countEl.textContent = tripCount ? `${tripCount} trip` : '';
+
+  const emptyEl = document.getElementById('heatmapEmptyState');
+  const mapEl = document.getElementById('heatmapContainer');
+  if(pointCount < 2){
+    if(emptyEl) emptyEl.style.display = 'flex';
+    if(mapEl) mapEl.style.display = 'none';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display = 'none';
+  if(mapEl) mapEl.style.display = 'block';
+
+  if(!canInitMap()){
+    // Belum ada provider peta siap (mis. token Mapbox belum diisi & provider bukan osm)
+    if(emptyEl){
+      emptyEl.style.display = 'flex';
+      emptyEl.innerHTML = '<div style="font-size:26px">🗺️</div><div>Atur provider peta di Pengaturan dulu untuk lihat rute favorit.</div>';
+    }
+    if(mapEl) mapEl.style.display = 'none';
+    return;
+  }
+
+  if(!heatmapInitialized){
+    heatmapInitialized = true;
+    mapboxgl.accessToken = MAPBOX_TOKEN || 'no-token-needed-for-osm';
+    heatmapInstance = new mapboxgl.Map({
+      container: 'heatmapContainer',
+      style: getMapStyle('night'),
+      center: geojson.features[0].geometry.coordinates,
+      zoom: 12,
+      attributionControl: false,
+      interactive: true,
+    });
+    heatmapInstance.addControl(new mapboxgl.NavigationControl({showCompass:false}), 'top-right');
+    if(window.ResizeObserver){
+      const ro = new ResizeObserver(()=>{ if(heatmapInstance) heatmapInstance.resize(); });
+      ro.observe(mapEl);
+    }
+    heatmapInstance.once('load', ()=>{
+      heatmapInstance.addSource('trip-heat', { type:'geojson', data:geojson });
+      heatmapInstance.addLayer({
+        id: 'trip-heat-layer',
+        type: 'heatmap',
+        source: 'trip-heat',
+        paint: {
+          'heatmap-weight': 0.6,
+          'heatmap-intensity': ['interpolate',['linear'],['zoom'], 10,1, 16,3],
+          'heatmap-radius': ['interpolate',['linear'],['zoom'], 10,8, 16,22],
+          'heatmap-opacity': 0.85,
+          'heatmap-color': [
+            'interpolate', ['linear'], ['heatmap-density'],
+            0,   'rgba(0,0,0,0)',
+            0.2, 'rgba(0,188,212,0.5)',
+            0.4, 'rgba(0,230,118,0.7)',
+            0.6, 'rgba(255,235,59,0.8)',
+            0.8, 'rgba(255,152,0,0.9)',
+            1,   'rgba(255,61,61,1)',
+          ],
+        }
+      });
+      fitHeatmapBounds(geojson);
+    });
+  } else {
+    // Sudah ada instance — cukup update data & resize (container baru saja jadi visible)
+    setTimeout(()=>{
+      heatmapInstance.resize();
+      const src = heatmapInstance.getSource('trip-heat');
+      if(src) src.setData(geojson);
+      fitHeatmapBounds(geojson);
+    }, 50);
+  }
+}
+
+function fitHeatmapBounds(geojson){
+  if(!heatmapInstance || !geojson.features.length) return;
+  const bounds = new mapboxgl.LngLatBounds();
+  geojson.features.forEach(f=>bounds.extend(f.geometry.coordinates));
+  try{ heatmapInstance.fitBounds(bounds, {padding:30, maxZoom:15, duration:0}); }catch(e){}
 }
 
 // ═══════════════════════════════════════════
