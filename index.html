@@ -1329,6 +1329,18 @@ body.light .ble-log{box-shadow:none}
   </div>
 </div>
 
+<!-- MODAL: CANCEL AUTO-RECONNECT -->
+<div class="modal-overlay" id="cancelReconnectModal">
+  <div class="modal">
+    <h3>⏳ Sedang Menunggu Motor</h3>
+    <p>App akan otomatis tersambung lagi begitu motor terdeteksi. Mau lanjut menunggu, atau pilih device secara manual sekarang?</p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal('cancelReconnectModal')">LANJUT MENUNGGU</button>
+      <button class="modal-btn" onclick="closeModal('cancelReconnectModal');stopReconnectWatcher();connectBLE()">KONEKSI MANUAL</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: RESET TRIP CONFIRM -->
 <div class="modal-overlay" id="resetTripModal">
   <div class="modal">
@@ -1421,6 +1433,11 @@ let SNAP_H = parseInt(localStorage.getItem('snap_h')) || 220;
 // BLE STATE
 // ═══════════════════════════════════════════
 let serialPort=null, serialWriter=null, serialReader=null, rxBuffer='', pollTimer=null, isConnected=false, pollIdx=0;
+// ── AUTO-RECONNECT STATE ──
+let lastPortInfo=null;          // {usbVendorId, usbProductId} dari port terakhir yg berhasil connect
+let wasManualDisconnect=false;  // true kalau user sendiri yg klik "Putuskan"
+let awaitingReconnect=false;    // true selagi menunggu device fisik muncul lagi
+let reconnectPollTimer=null;    // fallback polling getPorts() krn event 'connect' tdk selalu reliable di semua OS
 
 const POLL_CMDS=['AT+SPD?\r\n','AT+SOC?\r\n','AT+ODO?\r\n','AT+TINV?\r\n','AT+TMOT?\r\n','AT+TBAT?\r\n','AT+SOH?\r\n','AT+VBAT?\r\n','AT+IBAT?\r\n','AT+CBAT?\r\n','AT+ERR?\r\n'];
 const motoData={spd:0,odo:0,soc:0,soh:0,tinv:0,tmot:0,tbat:0,vbat:0,ibat:0,cbat:0,time:'—',errMask:0};
@@ -2389,6 +2406,9 @@ async function connectBLE(){
     await serialPort.open({baudRate:9600});
     serialWriter=serialPort.writable.getWriter();
     log('Serial terhubung ✓','sys');
+    try{ lastPortInfo = serialPort.getInfo(); }catch(e){ lastPortInfo = null; }
+    wasManualDisconnect = false;
+    stopReconnectWatcher();
     startReadLoop();
     isConnected=true;
     odoCheckedThisSession=false;
@@ -2438,6 +2458,11 @@ async function startReadLoop(){
     log('Read error: '+e.name+': '+e.message,'err');
   }finally{
     try{if(serialReader){serialReader.releaseLock();serialReader=null;}}catch(e){}
+    // Loop berhenti — kalau bukan karena user klik "Putuskan" manual, ini disconnect
+    // tak terduga (mis. motor mati di tengah jalan). Trigger flow auto-reconnect.
+    if(isConnected && !wasManualDisconnect){
+      handleUnexpectedDisconnect();
+    }
   }
 }
 
@@ -2682,12 +2707,90 @@ function onDisconnected(){
   isConnected=false; serialWriter=null; serialPort=null; stopPolling(); setBtState('disconnected');
   log('Koneksi terputus.','err');
 }
-async function requestNotifPermission(){
-  if(Notification && Notification.permission==='default') Notification.requestPermission();
+
+// ── AUTO-RECONNECT ──
+// Dipanggil saat read loop berhenti TANPA user klik "Putuskan" — kemungkinan besar
+// motor mati / dongle kehilangan daya di tengah jalan (kasus yg paling umum).
+function handleUnexpectedDisconnect(){
+  if(awaitingReconnect) return; // sudah dalam mode menunggu, jangan dobel
+  isConnected=false; serialWriter=null; serialPort=null; stopPolling();
+  awaitingReconnect=true;
+  setBtState('waiting-reconnect');
+  log('⚠️ Koneksi terputus tak terduga. Menunggu motor terdeteksi lagi...','err');
+  showToast('⚠️ Koneksi motor terputus');
+  notify('GESITS Terputus', 'Koneksi ke motor terputus tak terduga. App akan otomatis tersambung lagi saat motor terdeteksi.');
+  startReconnectWatcher();
+}
+
+function stopReconnectWatcher(){
+  awaitingReconnect=false;
+  if(reconnectPollTimer){ clearInterval(reconnectPollTimer); reconnectPollTimer=null; }
+  if(navigator.serial && _onSerialConnect){
+    try{ navigator.serial.removeEventListener('connect', _onSerialConnect); }catch(e){}
+    _onSerialConnect=null;
+  }
+}
+
+let _onSerialConnect=null;
+function startReconnectWatcher(){
+  if(!navigator.serial) return;
+  stopReconnectWatcher();
+  awaitingReconnect=true;
+
+  // Lapis 1: event native — fire begitu OS lapor device serial muncul lagi.
+  // Paling cepat & hemat baterai, tapi tdk 100% reliable di semua kombinasi OS/browser.
+  _onSerialConnect=()=>{ attemptAutoReconnect(); };
+  navigator.serial.addEventListener('connect', _onSerialConnect);
+
+  // Lapis 2: fallback polling tiap 4 detik, jaga-jaga event di atas tidak fire.
+  reconnectPollTimer=setInterval(attemptAutoReconnect, 4000);
+
+  // Coba langsung sekali di awal, siapa tahu device sudah balik sebelum watcher terpasang.
+  attemptAutoReconnect();
+}
+
+let _reconnectAttemptInFlight=false;
+async function attemptAutoReconnect(){
+  if(!awaitingReconnect || isConnected || !navigator.serial || _reconnectAttemptInFlight) return;
+  _reconnectAttemptInFlight=true;
+  try{
+    const ports = await navigator.serial.getPorts();
+    let match = ports[0]; // default: kalau cuma ada 1 port yg sudah diizinkan, pakai itu
+    if(lastPortInfo){
+      const found = ports.find(p=>{
+        const info = p.getInfo();
+        return info.usbVendorId===lastPortInfo.usbVendorId && info.usbProductId===lastPortInfo.usbProductId;
+      });
+      if(found) match = found;
+    }
+    if(!match) return; // device belum terdeteksi, tunggu lagi di polling/event berikutnya
+
+    await match.open({baudRate:9600});
+    serialPort = match;
+    serialWriter = serialPort.writable.getWriter();
+    stopReconnectWatcher();
+    log('✓ Tersambung ulang otomatis ke motor.','sys');
+    showToast('✅ Tersambung ulang');
+    notify('GESITS Tersambung', 'Koneksi ke motor berhasil tersambung ulang otomatis.');
+    startReadLoop();
+    isConnected=true;
+    odoCheckedThisSession=false;
+    lastEnergyTs=null;
+    setBtState('connected');
+    document.getElementById('lastConn').textContent='Hari ini '+new Date().toTimeString().slice(0,5);
+    await sendTimeCmd();
+    setTimeout(()=>{ startPolling(); }, 2000);
+  }catch(e){
+    // Device kedeteksi tp gagal dibuka (mis. masih dipakai proses lain) — coba lagi di polling berikutnya.
+  }finally{
+    _reconnectAttemptInFlight=false;
+  }
 }
 
 async function disconnectBLE(){
   closeModal('disconnModal');
+  wasManualDisconnect = true;
+  stopReconnectWatcher();
   isConnected=false;
   try{
     if(serialReader){await serialReader.cancel();serialReader=null;}
@@ -2716,6 +2819,14 @@ function setBtState(state){
     if(navLbl) navLbl.textContent='Motor...';
     navBtn.className='nav-ctrl-btn';
     if(profileStatus) profileStatus.textContent='Menghubungkan...';
+  } else if(state==='waiting-reconnect'){
+    btn.classList.add('connecting');
+    icon.innerHTML='<span class="spin">↻</span>'; label.textContent='Menunggu motor...';
+    dot.className='status-dot wait pulse'; dot.textContent='⏳ Menunggu motor...';
+    if(navDot) navDot.innerHTML='<span class="spin">↻</span>';
+    if(navLbl) navLbl.textContent='Menunggu...';
+    navBtn.className='nav-ctrl-btn';
+    if(profileStatus) profileStatus.textContent='⏳ Terputus — menunggu motor nyala lagi';
   } else if(state==='connected'){
     btn.classList.add('connected');
     const portName = serialPort ? 'GESITS' : 'Terhubung';
@@ -2736,6 +2847,7 @@ function setBtState(state){
 }
 function onBtClick(){
   if(isConnected) document.getElementById('disconnModal').classList.add('show');
+  else if(awaitingReconnect) document.getElementById('cancelReconnectModal').classList.add('show');
   else connectBLE();
 }
 
