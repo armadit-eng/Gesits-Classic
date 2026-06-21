@@ -2421,9 +2421,22 @@ async function connectBLE(){
     setTimeout(()=>{log('Mulai polling data...','sys');startPolling();},2000);
   }catch(err){
     setBtState('disconnected');
+    const failedPort = serialPort;
     serialPort=null; serialWriter=null;
-    if(err.name==='NotFoundError'||err.name==='AbortError') log('Tidak ada port dipilih.','sys');
-    else log('Error: '+(err.message||err),'err');
+    if(err.name==='NotFoundError'||err.name==='AbortError'){
+      log('Tidak ada port dipilih.','sys');
+    } else if(/already open/i.test(err.message||'') || /InvalidStateError/i.test(err.name||'')){
+      // Port nyangkut dlm status open dari sesi/percobaan sebelumnya yg gagal cleanup.
+      // Paksa tutup supaya percobaan klik berikutnya tdk gagal dgn error sama.
+      log('Port masih berstatus terbuka dari sesi sebelumnya, mencoba membersihkan...','sys');
+      if(failedPort){
+        try{ await failedPort.close(); log('✓ Port berhasil dibersihkan. Coba hubungkan lagi.','sys'); }
+        catch(e2){ log('Gagal membersihkan port: '+(e2.message||e2.name||e2),'err'); }
+      }
+      showToast('⚠️ Port bermasalah, dibersihkan. Coba hubungkan lagi.');
+    } else {
+      log('Error: '+(err.message||err),'err');
+    }
   }
 }
 
@@ -2709,13 +2722,39 @@ function onDisconnected(){
 }
 
 // ── AUTO-RECONNECT ──
+// Tutup port/writer yg sedang nyangkut, lepas referensi JS-nya. Dipanggil dari
+// berbagai jalur disconnect (terduga maupun tidak) supaya port FISIK selalu
+// benar2 closed sebelum percobaan open() berikutnya — kalau tidak, browser
+// masih anggap port itu "open" walau device sudah hilang, dan percobaan
+// reconnect (auto maupun manual) akan gagal terus dengan "port already open".
+async function cleanupStalePort(){
+  const stalePort = serialPort;
+  const staleWriter = serialWriter;
+  serialWriter = null;
+  serialPort = null;
+  if(staleWriter){ try{ staleWriter.releaseLock(); }catch(e){} }
+  if(stalePort){
+    try{ await stalePort.close(); }catch(e){ log('Cleanup port lama: '+(e.message||e.name||e),'sys'); }
+  }
+}
+
 // Dipanggil saat read loop berhenti TANPA user klik "Putuskan" — kemungkinan besar
 // motor mati / dongle kehilangan daya di tengah jalan (kasus yg paling umum).
-function handleUnexpectedDisconnect(){
-  if(awaitingReconnect) return; // sudah dalam mode menunggu, jangan dobel
-  isConnected=false; serialWriter=null; serialPort=null; stopPolling();
+// Juga dipanggil ulang kalau auto-reconnect sempat berhasil sebentar lalu putus
+// lagi (mis. koneksi tidak stabil) — makanya cleanup tetap jalan walau status
+// awaitingReconnect sudah true, supaya port yg baru gagal itu tidak nyangkut.
+async function handleUnexpectedDisconnect(){
+  const alreadyWaiting = awaitingReconnect;
+  isConnected=false; stopPolling();
   awaitingReconnect=true;
   setBtState('waiting-reconnect');
+  await cleanupStalePort();
+
+  if(alreadyWaiting){
+    // Sudah dalam mode menunggu sebelumnya (mis. reconnect tadi sempat berhasil
+    // tp putus lagi) — watcher kemungkinan masih jalan, tidak perlu notif dobel.
+    return;
+  }
   log('⚠️ Koneksi terputus tak terduga. Menunggu motor terdeteksi lagi...','err');
   showToast('⚠️ Koneksi motor terputus');
   notify('GESITS Terputus', 'Koneksi ke motor terputus tak terduga. App akan otomatis tersambung lagi saat motor terdeteksi.');
@@ -2753,9 +2792,10 @@ let _reconnectAttemptInFlight=false;
 async function attemptAutoReconnect(){
   if(!awaitingReconnect || isConnected || !navigator.serial || _reconnectAttemptInFlight) return;
   _reconnectAttemptInFlight=true;
+  let match=null;
   try{
     const ports = await navigator.serial.getPorts();
-    let match = ports[0]; // default: kalau cuma ada 1 port yg sudah diizinkan, pakai itu
+    match = ports[0]; // default: kalau cuma ada 1 port yg sudah diizinkan, pakai itu
     if(lastPortInfo){
       const found = ports.find(p=>{
         const info = p.getInfo();
@@ -2781,7 +2821,15 @@ async function attemptAutoReconnect(){
     await sendTimeCmd();
     setTimeout(()=>{ startPolling(); }, 2000);
   }catch(e){
-    // Device kedeteksi tp gagal dibuka (mis. masih dipakai proses lain) — coba lagi di polling berikutnya.
+    // Device kedeteksi tp gagal dibuka. Kalau pesannya "already open", port itu
+    // nyangkut dlm status open dari percobaan sebelumnya (mis. open() sukses tp
+    // langkah setelahnya gagal) — paksa close supaya percobaan berikutnya tdk
+    // ikut gagal dgn alasan yg sama.
+    log('Reconnect attempt gagal: '+(e.message||e.name||e),'sys');
+    if(match){
+      try{ await match.close(); }catch(e2){}
+    }
+    serialPort=null; serialWriter=null;
   }finally{
     _reconnectAttemptInFlight=false;
   }
