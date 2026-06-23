@@ -92,15 +92,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .speedo-unit{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:1px}
 
 /* ── BATTERY VIEW ── */
-.batt-hero{background:var(--card);border:1px solid var(--border);border-radius:16px;margin:13px 14px 0;padding:20px 18px 16px;text-align:center}
-.batt-icon-svg{width:90px;height:160px;margin-bottom:10px}
-.batt-hero-pct{font-family:'Rajdhani',sans-serif;font-size:42px;font-weight:700;color:var(--text);line-height:1}
-.batt-hero-sub{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
-.batt-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px 14px 14px}
-.batt-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
-.batt-icon{font-size:22px;margin-bottom:6px}
-.batt-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.batt-val{font-family:'Rajdhani',sans-serif;font-size:21px;font-weight:700}
+.batt-hero{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;margin:13px 14px 0;padding:16px 18px}
+.batt-hero-pct{font-family:'Rajdhani',sans-serif;font-size:56px;font-weight:800;color:var(--text);line-height:1;min-width:80px}
+.batt-hero-right{flex:1;display:flex;flex-direction:column;gap:6px}
+.batt-hero-sub{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.batt-hero-bar{height:6px;background:var(--border);border-radius:6px;overflow:hidden}
+.batt-hero-bar-fill{height:100%;border-radius:6px;background:var(--green);transition:width .6s ease}
+.batt-hero-meta{font-size:12px;color:var(--muted);font-weight:500}
+.batt-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 14px 14px}
+.batt-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:10px}
+.batt-icon{font-size:18px;flex-shrink:0}
+.batt-card-right{display:flex;flex-direction:column;gap:1px}
+.batt-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.batt-val{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
 
 /* ── ENERGY / RANGE CARD ── */
 .energy-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 16px;margin:0 14px 12px}
@@ -589,6 +593,7 @@ body.landscape-mode .tabs { display:none!important; }
 body.landscape-mode .screen { display:none!important; }
 body.landscape-mode #screen-navigasi { display:flex!important; height:100dvh!important; }
 body.landscape-mode .nav-searchbar,
+body.landscape-mode #navQuickBtns,
 body.landscape-mode .nav-bottom-bar,
 body.landscape-mode .nav-mode-btns,
 body.landscape-mode .dest-panel,
@@ -615,75 +620,98 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .hud-top {
   display:flex; align-items:center; justify-content:space-between;
   padding:6px 14px;
-  background:linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%);
+  /* Gradient lebih kuat supaya terbaca di peta terang (siang/OSM) */
+  background:linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 85%, transparent 100%);
 }
 .hud-top-left { display:flex; align-items:center; gap:12px; }
 .hud-clock {
   font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px;
   color:#fff; letter-spacing:1px; line-height:1;
+  text-shadow: 0 1px 6px rgba(0,0,0,.9), 0 0 12px rgba(0,0,0,.6);
 }
 .hud-gps {
-  font-size:11px; font-weight:600; padding:2px 7px;
+  font-size:11px; font-weight:700; padding:3px 8px;
   border-radius:20px; border:1px solid;
   line-height:1.4;
 }
-.hud-gps.ok  { color:#00e676; border-color:rgba(0,230,118,.4); background:rgba(0,230,118,.1); }
-.hud-gps.off { color:#ff5252; border-color:rgba(255,82,82,.4);  background:rgba(255,82,82,.1); }
-.hud-top-right { display:flex; align-items:center; gap:16px; }
+.hud-gps.ok  { color:#00e676; border-color:rgba(0,230,118,.6); background:rgba(0,0,0,0.55); }
+.hud-gps.off { color:#ff5252; border-color:rgba(255,82,82,.6);  background:rgba(0,0,0,0.55); }
+.hud-top-right { display:flex; align-items:center; gap:10px; }
+/* Bungkus SOC & Range dalam pill semi-opaque supaya terbaca di semua peta */
+.hud-top-right-pill {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+  border-radius:20px; padding:4px 12px;
+  border:1px solid rgba(255,255,255,0.1);
+}
 .hud-soc {
   font-family:'Rajdhani',sans-serif; font-weight:800; font-size:24px;
   color:var(--green); line-height:1;
 }
 .hud-soc.low { color:#ff5252; }
 .hud-range {
-  font-size:13px; font-weight:700; color:rgba(255,255,255,.75);
+  font-size:13px; font-weight:700; color:rgba(255,255,255,.9);
   line-height:1;
 }
-.hud-range span { font-size:10px; font-weight:600; color:rgba(255,255,255,.4); }
+.hud-range span { font-size:10px; font-weight:600; color:rgba(255,255,255,.55); }
 
-/* ── CENTER SPEED ── */
+/* ── CENTER SPEED — backdrop supaya terbaca di semua tema peta ── */
 .hud-center {
   display:flex; flex-direction:column;
   align-items:flex-start; justify-content:center;
-  padding:0 20px; flex:1;
+  padding:0 16px; flex:1;
+}
+/* Pill backdrop di belakang angka kecepatan */
+.hud-spd-wrap {
+  background:rgba(0,0,0,0.52); backdrop-filter:blur(6px);
+  border-radius:16px; padding:8px 18px 10px 16px;
+  border:1px solid rgba(255,255,255,0.08);
 }
 .hud-spd {
   font-family:'Rajdhani',sans-serif; font-weight:900;
-  font-size:clamp(72px, 18vw, 130px);
+  font-size:clamp(64px, 16vw, 120px);
   color:#fff; line-height:.9; letter-spacing:-3px;
-  text-shadow: 0 2px 20px rgba(0,0,0,.6);
+  text-shadow: 0 2px 8px rgba(0,0,0,.8);
 }
 .hud-spd-unit {
-  font-size:16px; font-weight:600; color:rgba(255,255,255,.45);
-  letter-spacing:3px; text-transform:uppercase; margin-top:4px;
+  font-size:13px; font-weight:700; color:rgba(255,255,255,.65);
+  letter-spacing:4px; text-transform:uppercase; margin-top:5px;
 }
 
-/* ── NAV INSTRUCTION (saat navigasi aktif) ── */
+/* ── NAV INSTRUCTION ── */
 .hud-nav-instruction {
   display:none;
   align-items:center; gap:10px;
-  background:rgba(0,0,0,0.5); backdrop-filter:blur(8px);
-  border-radius:10px; padding:7px 12px;
-  max-width:55vw; pointer-events:none;
+  background:rgba(0,0,0,0.65); backdrop-filter:blur(10px);
+  border-radius:10px; padding:7px 14px;
+  max-width:60vw; pointer-events:none;
   margin-top:8px;
+  border:1px solid rgba(255,255,255,0.08);
 }
 .hud-nav-instruction.show { display:flex; }
 .hud-nav-arrow { font-size:18px; flex-shrink:0; }
-.hud-nav-text  { font-size:12px; font-weight:600; color:#fff;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hud-nav-text  { font-size:12px; font-weight:700; color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 1px 4px rgba(0,0,0,.8); }
 
 /* ── BOTTOM BAR ── */
 .hud-bottom {
   display:flex; align-items:center; justify-content:space-around;
-  padding:5px 14px 8px;
-  background:linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+  padding:6px 14px 10px;
+  background:linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 85%, transparent 100%);
 }
 .hud-bottom-item { display:flex; flex-direction:column; align-items:center; gap:1px; }
-.hud-bottom-label { font-size:9px; font-weight:700; color:rgba(255,255,255,.35);
-  text-transform:uppercase; letter-spacing:.8px; }
-.hud-bottom-val { font-family:'Rajdhani',sans-serif; font-size:17px;
-  font-weight:700; color:#fff; line-height:1; }
-.hud-bottom-div { width:1px; height:28px; background:rgba(255,255,255,.1); }
+.hud-bottom-label {
+  font-size:9px; font-weight:700; color:rgba(255,255,255,.65);
+  text-transform:uppercase; letter-spacing:.8px;
+  text-shadow:0 1px 4px rgba(0,0,0,.9);
+}
+.hud-bottom-val {
+  font-family:'Rajdhani',sans-serif; font-size:17px;
+  font-weight:700; color:#fff; line-height:1;
+  text-shadow:0 1px 6px rgba(0,0,0,.9);
+}
+.hud-bottom-div { width:1px; height:28px; background:rgba(255,255,255,.15); }
 </style>
 </head>
 <body>
@@ -858,49 +886,60 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 
   <!-- BATTERY VIEW -->
   <div id="viewBattery" style="display:none;overflow-y:auto">
+    <!-- Hero: SOC % besar + progress bar + metadata singkat -->
     <div class="batt-hero">
-      <svg class="batt-icon-svg" viewBox="0 0 100 180" xmlns="http://www.w3.org/2000/svg">
-        <!-- terminal -->
-        <rect x="38" y="2" width="24" height="12" rx="3" fill="var(--border)"/>
-        <!-- body outline -->
-        <rect x="6" y="14" width="88" height="164" rx="12" fill="none" stroke="var(--border)" stroke-width="4"/>
-        <!-- fill clip -->
-        <clipPath id="battClip"><rect x="6" y="14" width="88" height="164" rx="12"/></clipPath>
-        <rect id="battFillRect" x="6" y="178" width="88" height="0" fill="var(--muted)" clip-path="url(#battClip)" style="transition:height .6s ease, y .6s ease, fill .6s ease"/>
-      </svg>
-      <div class="batt-hero-pct" id="battHeroPct">— %</div>
-      <div class="batt-hero-sub" id="battHeroLabel">State of Charge</div>
+      <div class="batt-hero-pct" id="battHeroPct">—%</div>
+      <div class="batt-hero-right">
+        <div class="batt-hero-sub">State of Charge</div>
+        <div class="batt-hero-bar">
+          <div class="batt-hero-bar-fill" id="battHeroBar" style="width:0%"></div>
+        </div>
+        <div class="batt-hero-meta" id="battHeroLabel">SOH: —%</div>
+      </div>
     </div>
+    <!-- Grid 3 kolom: data singkat -->
     <div class="batt-grid">
       <div class="batt-card">
         <div class="batt-icon">⚡</div>
-        <div class="batt-label">Voltase</div>
-        <div class="batt-val" id="vbatVal">— V</div>
+        <div class="batt-card-right">
+          <div class="batt-label">Voltase</div>
+          <div class="batt-val" id="vbatVal">— V</div>
+        </div>
       </div>
       <div class="batt-card">
         <div class="batt-icon">🔌</div>
-        <div class="batt-label">Arus</div>
-        <div class="batt-val" id="ibatVal">— A</div>
+        <div class="batt-card-right">
+          <div class="batt-label">Arus</div>
+          <div class="batt-val" id="ibatVal">— A</div>
+        </div>
       </div>
       <div class="batt-card">
-        <div class="batt-icon">🔄</div>
-        <div class="batt-label">Siklus</div>
-        <div class="batt-val" id="cbatVal">—</div>
+        <div class="batt-icon">💡</div>
+        <div class="batt-card-right">
+          <div class="batt-label">Daya</div>
+          <div class="batt-val" id="pbatVal">— W</div>
+        </div>
       </div>
       <div class="batt-card">
         <div class="batt-icon">🌡️</div>
-        <div class="batt-label">Suhu Baterai</div>
-        <div class="batt-val" id="tbatValBatt">— °C</div>
+        <div class="batt-card-right">
+          <div class="batt-label">Suhu</div>
+          <div class="batt-val" id="tbatValBatt">— °C</div>
+        </div>
+      </div>
+      <div class="batt-card">
+        <div class="batt-icon">🔄</div>
+        <div class="batt-card-right">
+          <div class="batt-label">Siklus</div>
+          <div class="batt-val" id="cbatVal">—</div>
+        </div>
       </div>
       <div class="batt-card">
         <div class="batt-icon">❤️</div>
-        <div class="batt-label">State of Health</div>
-        <div class="batt-val" id="sohValBatt">— %</div>
-      </div>
-      <div class="batt-card">
-        <div class="batt-icon">⏱️</div>
-        <div class="batt-label">Estimasi Daya</div>
-        <div class="batt-val" id="pbatVal">— W</div>
+        <div class="batt-card-right">
+          <div class="batt-label">SOH</div>
+          <div class="batt-val" id="sohValBatt">— %</div>
+        </div>
       </div>
     </div>
   </div>
@@ -920,17 +959,19 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <div class="hud-gps off" id="hudGps">GPS</div>
       </div>
       <div class="hud-top-right">
-        <div>
+        <div class="hud-top-right-pill">
           <div class="hud-range"><span>RANGE </span><span id="hudRange">—</span> km</div>
+          <div class="hud-soc" id="hudSoc">—%</div>
         </div>
-        <div class="hud-soc" id="hudSoc">—%</div>
       </div>
     </div>
 
     <!-- CENTER: angka kecepatan besar + instruksi navigasi di bawahnya -->
     <div class="hud-center">
-      <div class="hud-spd" id="hudSpd">0</div>
-      <div class="hud-spd-unit">km/h</div>
+      <div class="hud-spd-wrap">
+        <div class="hud-spd" id="hudSpd">0</div>
+        <div class="hud-spd-unit">km/h</div>
+      </div>
       <div class="hud-nav-instruction" id="hudNavInstr">
         <div class="hud-nav-arrow" id="hudNavArrow">↑</div>
         <div class="hud-nav-text"  id="hudNavText">—</div>
@@ -2872,7 +2913,7 @@ function parseResponse(raw){
       // Battery manager alarm
       checkBmAlarms(num, motoData.tbat, motoData.soh);
       document.getElementById('socVal2').textContent=num+' %';
-      document.getElementById('battHeroPct').textContent=num+' %';
+      document.getElementById('battHeroPct').textContent=num+'%';
       renderBatteryIcon(num);
       updateBattPower();
       updateRangeEstimate();
@@ -3002,19 +3043,19 @@ function updateBattPower(){
 // Render icon baterai vertikal: fill sesuai SOC, warna sesuai threshold
 function renderBatteryIcon(pct){
   pct = Math.max(0, Math.min(100, pct));
-  const totalH = 164; // tinggi area dalam SVG (sesuai rect body)
-  const fillH = (pct/100) * totalH;
-  const rect = document.getElementById('battFillRect');
-  rect.setAttribute('y', 178 - fillH); // 178 = bottom edge (14+164)
-  rect.setAttribute('height', fillH);
-
-  let color, label;
-  if(pct < 20){ color='#ff1744'; label='Baterai Rendah'; }
-  else if(pct < 40){ color='#ffc107'; label='Baterai Sedang'; }
-  else { color='#00e676'; label='State of Charge'; }
-  rect.setAttribute('fill', color);
-  document.getElementById('battHeroLabel').textContent = label;
+  let color;
+  if(pct < 20){ color='#ff1744'; }
+  else if(pct < 40){ color='#ffc107'; }
+  else { color='#00e676'; }
+  // Progress bar
+  const bar = document.getElementById('battHeroBar');
+  if(bar){ bar.style.width=pct+'%'; bar.style.background=color; }
+  // Warna persentase
   document.getElementById('battHeroPct').style.color = color;
+  // SOH di bawah bar (diisi dari SOC update juga)
+  const soh = motoData.soh;
+  const lbl = document.getElementById('battHeroLabel');
+  if(lbl) lbl.textContent = soh != null ? 'SOH: '+soh+'%' : 'SOH: —%';
 }
 
 // ── SEND ──
