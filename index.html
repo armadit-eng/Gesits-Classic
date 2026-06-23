@@ -242,9 +242,16 @@ body.light .ble-log{box-shadow:none}
   display:flex;flex-direction:column;gap:10px;
   backdrop-filter:blur(12px);
   box-shadow:0 4px 24px rgba(0,0,0,.5);
-  max-height:60vh;overflow:hidden;
+  max-height:72vh;overflow:hidden;
   will-change:transform;
 }
+.dest-panel-scroll{
+  flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  min-height:0;
+  /* Sembunyikan scrollbar tapi tetap bisa scroll */
+  scrollbar-width:none;
+}
+.dest-panel-scroll::-webkit-scrollbar{display:none}
 .dest-panel-draghandle{
   display:flex;flex-direction:column;align-items:center;gap:8px;
   margin:-6px 0 -2px;padding:8px 0 6px;cursor:grab;touch-action:none;
@@ -260,7 +267,7 @@ body.light .ble-log{box-shadow:none}
 .preview-chip{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center}
 .preview-chip span{font-size:15px;font-weight:700;color:#00d4ff}
 .chip-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
-.preview-steps{overflow-y:auto;max-height:120px;display:flex;flex-direction:column;gap:2px}
+.preview-steps{display:flex;flex-direction:column;gap:2px}
 .preview-step{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
 .preview-step:last-child{border-bottom:none}
 .ps-dist{color:#00d4ff;font-weight:600;min-width:42px;font-size:11px}
@@ -923,17 +930,19 @@ body.light .ble-log{box-shadow:none}
         <button class="dest-close-btn" onclick="clearDestination()">✕</button>
       </div>
     </div>
-    <div class="preview-chips">
-      <div class="preview-chip"><span id="previewDist">— km</span><div class="chip-lbl">Jarak</div></div>
-      <div class="preview-chip"><span id="previewEta">— mnt</span><div class="chip-lbl">Waktu</div></div>
+    <div class="dest-panel-scroll">
+      <div class="preview-chips">
+        <div class="preview-chip"><span id="previewDist">— km</span><div class="chip-lbl">Jarak</div></div>
+        <div class="preview-chip"><span id="previewEta">— mnt</span><div class="chip-lbl">Waktu</div></div>
+      </div>
+      <div id="routeAltChips" class="route-alt-chips" style="display:none"></div>
+      <div id="destWeather" class="dest-weather" style="display:none"></div>
+      <div id="elevPanel" class="elev-panel" style="display:none">
+        <canvas id="elevChart" width="320" height="56"></canvas>
+        <div id="elevStats" class="elev-stats"></div>
+      </div>
+      <div id="previewSteps" class="preview-steps"></div>
     </div>
-    <div id="routeAltChips" class="route-alt-chips" style="display:none"></div>
-    <div id="destWeather" class="dest-weather" style="display:none"></div>
-    <div id="elevPanel" class="elev-panel" style="display:none">
-      <canvas id="elevChart" width="320" height="56"></canvas>
-      <div id="elevStats" class="elev-stats"></div>
-    </div>
-    <div id="previewSteps" class="preview-steps"></div>
     <button class="dest-go-btn" onclick="startNavigation()">▶ Mulai Navigasi</button>
   </div>
 
