@@ -3457,21 +3457,14 @@ const MAP_STYLES_OSM={
   day: osmRasterStyle(
     ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png','https://b.tile.openstreetmap.org/{z}/{x}/{y}.png','https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'],
     '© OpenStreetMap contributors'),
-  // Malam: dark background CARTO + label OSM terpisah di atasnya.
-  // dark_matter_no_labels = background gelap kontras tanpa teks,
-  // dark_only_labels = teks jalan/nama tempat saja — digabung hasilnya terbaca.
-  night: osmRasterStyleMulti([
-    { id:'night-base', tiles:[
-      'https://a.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
-      'https://b.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
-      'https://c.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
-      'https://d.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png'] },
-    { id:'night-labels', tiles:[
-      'https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
-      'https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
-      'https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
-      'https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png'] },
-  ], '© OpenStreetMap contributors © CARTO'),
+  // Malam: dark_all = background + garis jalan + label semua dalam 1 tile (CARTO Dark Matter).
+  // Ini yang paling lengkap dan terbaca. dark_matter_no_labels tidak punya garis jalan sama sekali.
+  night: osmRasterStyle(
+    ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+     'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+     'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+     'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
+    '© OpenStreetMap contributors © CARTO'),
   // Satelit: imagery gratis Esri (tanpa key) + layer label/jalan/batas di atasnya → hybrid
   satellite: osmRasterStyleMulti([
     { id:'imagery', tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] },
