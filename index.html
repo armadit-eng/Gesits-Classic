@@ -3415,7 +3415,7 @@ let currentStyle='day';
 let routeSteps=[], currentStepIdx=0, lastSpokenStep=-1;
 let snapInterval=null, imageQuality=0.35;
 let offRouteCount=0;
-const OFF_ROUTE_M=45, OFF_ROUTE_HITS=1;
+const OFF_ROUTE_M=45, OFF_ROUTE_HITS=2; // 2 hit berturut = ~2 GPS update berturut keluar jalur
 let userPannedMap=false;
 let panResetTimer=null;
 
@@ -4231,6 +4231,7 @@ function startNavigation(){
   if(!destLng||!userLat) return;
   navActive=true;
   currentStepIdx=0; lastSpokenStep=-1; offRouteCount=0;
+  nearestRouteIdx=0;
   rerouteInProgress=false;
   clearTimeout(rerouteCooldownTimer); rerouteCooldownTimer=null;
   document.getElementById('destPanel').style.display='none';
@@ -4313,21 +4314,22 @@ function showArrivalBanner(){
 // ── REROUTE CHECK (dengan cooldown & UI feedback) ──
 let rerouteInProgress = false;
 let rerouteCooldownTimer = null;
-const REROUTE_COOLDOWN_MS = 8000; // 8 detik cooldown antar reroute
+const REROUTE_COOLDOWN_MS = 5000; // 5 detik cooldown — lebih responsif dari 8 detik sebelumnya
 
 function checkReroute(){
   if(!navActive||!routeCoords.length||!userLat) return;
   const dist=minDistanceFromRoute(userLng,userLat,routeCoords);
   if(dist>OFF_ROUTE_M){
     offRouteCount++;
+    log(`Off-route: ${dist.toFixed(0)}m dari jalur (hit ${offRouteCount}/${OFF_ROUTE_HITS})`,'sys');
     if(offRouteCount>=OFF_ROUTE_HITS && !rerouteInProgress && !rerouteCooldownTimer){
       triggerReroute();
     } else if(rerouteInProgress){
-      // Tunjukkan status rerouting di instruksi
       const instr = document.getElementById('rbInstruction');
       if(instr) instr.textContent = '⚠️ Menghitung ulang rute...';
     }
   } else {
+    if(offRouteCount>0) log(`Kembali ke jalur (${dist.toFixed(0)}m dari rute)`,'sys');
     offRouteCount=0;
     updateStepDisplay();
   }
@@ -4336,6 +4338,7 @@ function checkReroute(){
 async function triggerReroute(){
   rerouteInProgress = true;
   offRouteCount = 0;
+  nearestRouteIdx = 0; // reset supaya setelah reroute cek dari awal rute baru
   log('Off-route! Menghitung ulang rute...','sys');
 
   // UI: instruksi jadi "Rerouting..."
@@ -4882,12 +4885,23 @@ async function snapMapToBase64(){
   });
 }
 
-function minDistanceFromRoute(lng,lat,coords){
-  let min=Infinity;
-  coords.forEach(c=>{
-    const d=haversine(lat,lng,c[1],c[0]);
-    if(d<min) min=d;
-  });
+// ── JARAK KE RUTE ──
+// Optimasi: tidak cek semua titik rute (bisa ratusan), tapi mulai dari
+// titik terdekat yang sudah diketahui (nearestRouteIdx) dan cek ±window titik.
+// Ini membuat checkReroute() jauh lebih ringan saat rute panjang.
+let nearestRouteIdx = 0;
+function minDistanceFromRoute(lng, lat, coords){
+  if(!coords || !coords.length) return Infinity;
+  const WINDOW = 60; // cek 60 titik ke depan dan 20 titik ke belakang dari posisi terakhir
+  const start = Math.max(0, nearestRouteIdx - 20);
+  const end   = Math.min(coords.length - 1, nearestRouteIdx + WINDOW);
+  let min = Infinity, minIdx = nearestRouteIdx;
+  for(let i = start; i <= end; i++){
+    const d = haversine(lat, lng, coords[i][1], coords[i][0]);
+    if(d < min){ min = d; minIdx = i; }
+  }
+  // Kalau titik terdekat adalah batas window, kemungkinan user sudah jauh ke depan — geser window
+  if(minIdx >= nearestRouteIdx) nearestRouteIdx = minIdx;
   return min;
 }
 
