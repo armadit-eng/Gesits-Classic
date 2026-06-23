@@ -1534,14 +1534,23 @@ body.landscape-mode #dashHUD { display:flex!important; }
     <div class="preset-row" id="providerBtns" style="margin-bottom:8px">
       <button type="button" class="preset-btn" id="provBtnMapbox" onclick="pickProvider('mapbox')">Mapbox</button>
       <button type="button" class="preset-btn" id="provBtnOsm" onclick="pickProvider('osm')">OSM (Gratis)</button>
+      <button type="button" class="preset-btn" id="provBtnMaptiler" onclick="pickProvider('maptiler')">MapTiler</button>
     </div>
-    <div class="uuid-tip" id="providerHint">💡 Mapbox: kualitas peta lebih bagus, butuh token (ada kuota gratis). OSM: 100% gratis tanpa token — basis data OpenStreetMap (mode malam pakai tile gelap CARTO, satelit pakai imagery Esri, semuanya gratis).</div>
+    <div class="uuid-tip" id="providerHint"></div>
     <div id="mapboxTokenWrap">
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px;margin-top:12px">🔑 Mapbox Access Token</div>
-    <div class="token-field">
-      <label>Token (pk.eyJ1...)</label>
-      <input id="inMapboxToken" type="text" placeholder="pk.eyJ1Ijoixxxxxxxx...">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;margin-top:12px">🔑 Mapbox Access Token</div>
+      <div class="token-field">
+        <label>Token (pk.eyJ1...)</label>
+        <input id="inMapboxToken" type="text" placeholder="pk.eyJ1Ijoixxxxxxxx...">
+      </div>
     </div>
+    <div id="maptilerKeyWrap" style="display:none">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;margin-top:12px">🔑 MapTiler API Key</div>
+      <div class="token-field">
+        <label>API Key</label>
+        <input id="inMaptilerKey" type="text" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx">
+      </div>
+      <div class="uuid-tip">💡 Daftar gratis di <b>maptiler.com</b> → API Keys → create key. Free tier 100K tiles/bulan — lebih dari cukup untuk pemakaian harian.</div>
     </div>
     <hr class="modal-sep">
     <div style="font-size:13px;font-weight:600;margin-bottom:8px">🔋 Estimasi Energi & Jarak</div>
@@ -1621,7 +1630,8 @@ body.landscape-mode #dashHUD { display:flex!important; }
 // CONFIG
 // ═══════════════════════════════════════════
 let MAPBOX_TOKEN = localStorage.getItem('mapbox_tk') || '';
-let MAP_PROVIDER = localStorage.getItem('map_provider') || 'mapbox'; // 'mapbox' | 'osm'
+let MAP_PROVIDER = localStorage.getItem('map_provider') || 'mapbox'; // 'mapbox' | 'osm' | 'maptiler'
+let MAPTILER_KEY = localStorage.getItem('maptiler_key') || '';
 let BATTERY_CAPACITY_AH = parseFloat(localStorage.getItem('batt_capacity_ah')) || 20;
 let BATTERY_NOMINAL_V   = parseFloat(localStorage.getItem('batt_nominal_v'))   || 72;
 let REF_WHKM = parseFloat(localStorage.getItem('ref_wh_km')) || 28;
@@ -3435,10 +3445,22 @@ const MAP_STYLES_OSM={
   day: osmRasterStyle(
     ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png','https://b.tile.openstreetmap.org/{z}/{x}/{y}.png','https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'],
     '© OpenStreetMap contributors'),
-  // Malam: tile gelap CARTO (basis data OSM juga, gratis tanpa key)
+  // Malam: CARTO Voyager Dark — lebih terang & kontras dari dark_all (hitam pekat),
+  // jalan/label tetap terlihat jelas, warna navy/biru gelap seperti referensi.
+  // Alternatif: dark_matter_no_labels (lebih gelap), rastertiles/voyager (terang neutral)
   night: osmRasterStyle(
-    ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png','https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png','https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png','https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
+    ['https://a.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
+     'https://b.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
+     'https://c.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
+     'https://d.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png'],
     '© OpenStreetMap contributors © CARTO'),
+  // Malam versi lebih terang (Voyager) — uncomment kalau mau style lebih mirip referensi
+  // night: osmRasterStyle(
+  //   ['https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+  //    'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+  //    'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+  //    'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
+  //   '© OpenStreetMap contributors © CARTO'),
   // Satelit: imagery gratis Esri (tanpa key) + layer label/jalan/batas di atasnya → hybrid
   satellite: osmRasterStyleMulti([
     { id:'imagery', tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] },
@@ -3447,8 +3469,21 @@ const MAP_STYLES_OSM={
     { id:'labels',  tiles:['https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png'] },
   ], 'Esri, Maxar, Earthstar Geographics · © OpenStreetMap contributors © CARTO'),
 };
-function getMapStyle(name){ return (MAP_PROVIDER==='osm' ? MAP_STYLES_OSM : MAP_STYLES_MAPBOX)[name]; }
-function canInitMap(){ return MAP_PROVIDER==='osm' || !!MAPBOX_TOKEN; }
+function getMapStyle(name){
+  if(MAP_PROVIDER==='maptiler') return getMapStyleMaptiler(name);
+  return (MAP_PROVIDER==='osm' ? MAP_STYLES_OSM : MAP_STYLES_MAPBOX)[name];
+}
+function getMapStyleMaptiler(name){
+  const k = MAPTILER_KEY;
+  // Style vector MapTiler — kualitas terbaik, mirip referensi speedo.rasyid.site
+  const styles = {
+    day:       `https://api.maptiler.com/maps/streets-v2/style.json?key=${k}`,
+    night:     `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${k}`,
+    satellite: `https://api.maptiler.com/maps/hybrid/style.json?key=${k}`,
+  };
+  return styles[name] || styles.night;
+}
+function canInitMap(){ return MAP_PROVIDER==='osm' || (MAP_PROVIDER==='maptiler' && !!MAPTILER_KEY) || (MAP_PROVIDER==='mapbox' && !!MAPBOX_TOKEN); }
 function updateMapAttribution(){
   const el=document.getElementById('mapAttribution');
   if(!el) return;
@@ -4829,6 +4864,7 @@ function showToast(msg){
 // ═══════════════════════════════════════════
 function openSettings(){
   document.getElementById('inMapboxToken').value=MAPBOX_TOKEN;
+  document.getElementById('inMaptilerKey').value=MAPTILER_KEY;
   document.getElementById('inBattNomV').value=BATTERY_NOMINAL_V;
   document.getElementById('inBattCapacity').value=BATTERY_CAPACITY_AH;
   document.getElementById('inRefWhKm').value=REF_WHKM;
@@ -4882,14 +4918,20 @@ function pickProvider(p){
   pendingProvider = p;
   document.getElementById('provBtnMapbox').classList.toggle('active', p==='mapbox');
   document.getElementById('provBtnOsm').classList.toggle('active', p==='osm');
+  document.getElementById('provBtnMaptiler').classList.toggle('active', p==='maptiler');
   document.getElementById('mapboxTokenWrap').style.display = p==='mapbox' ? 'block' : 'none';
-  document.getElementById('providerHint').textContent = p==='osm'
-    ? '💡 OSM: 100% gratis tanpa token — basis data OpenStreetMap (mode malam pakai tile gelap CARTO, satelit pakai imagery Esri, semuanya gratis, tanpa API key).'
-    : '💡 Mapbox: kualitas peta lebih bagus & detail, butuh token (tersedia kuota gratis bulanan).';
+  document.getElementById('maptilerKeyWrap').style.display = p==='maptiler' ? 'block' : 'none';
+  const hints = {
+    osm:      '💡 OSM: 100% gratis tanpa token — mode malam pakai tile CARTO, satelit pakai Esri.',
+    mapbox:   '💡 Mapbox: peta vektor berkualitas tinggi, butuh token (ada kuota gratis bulanan).',
+    maptiler: '💡 MapTiler: peta vektor jernih & terbaca, mirip referensi. Daftar gratis di maptiler.com (100K tiles/bulan).',
+  };
+  document.getElementById('providerHint').textContent = hints[p] || '';
 }
 
 function saveSettings(){
   const tok=document.getElementById('inMapboxToken').value.trim();
+  const maptilerKey=document.getElementById('inMaptilerKey').value.trim();
   const nomV=parseFloat(document.getElementById('inBattNomV').value)||72;
   const capAh=parseFloat(document.getElementById('inBattCapacity').value)||20;
   const refWh=parseFloat(document.getElementById('inRefWhKm').value)||28;
@@ -4914,9 +4956,10 @@ function saveSettings(){
   // bikin proses encode JPEG adaptif (cari quality yg muat 7000 char) jadi berat
   snapW=Math.min(1024,Math.max(64,snapW));
   snapH=Math.min(1024,Math.max(64,snapH));
-  if(pendingProvider==='mapbox' && !tok){alert('Mode Mapbox butuh token! Isi token, atau pilih OSM (Gratis).');return;}
+  if(pendingProvider==='mapbox' && !tok){alert('Mode Mapbox butuh token! Isi token, atau pilih OSM/MapTiler.');return;}
+  if(pendingProvider==='maptiler' && !maptilerKey){alert('Mode MapTiler butuh API key! Daftar gratis di maptiler.com, atau pilih OSM.');return;}
   const providerChanged = pendingProvider !== MAP_PROVIDER;
-  MAPBOX_TOKEN=tok; MAP_PROVIDER=pendingProvider;
+  MAPBOX_TOKEN=tok; MAPTILER_KEY=maptilerKey; MAP_PROVIDER=pendingProvider;
   if(typeof mapboxgl!=='undefined') mapboxgl.accessToken=MAPBOX_TOKEN||'no-token-needed-for-osm';
   BATTERY_NOMINAL_V=nomV; BATTERY_CAPACITY_AH=capAh; REF_WHKM=refWh; OCM_API_KEY=ocmKey;
   SNAP_W=snapW; SNAP_H=snapH;
@@ -4925,6 +4968,7 @@ function saveSettings(){
   localStorage.setItem('snap_h',snapH);
   localStorage.setItem('ocm_api_key',ocmKey);
   localStorage.setItem('mapbox_tk',tok);
+  localStorage.setItem('maptiler_key',maptilerKey);
   localStorage.setItem('map_provider',MAP_PROVIDER);
   localStorage.setItem('batt_nominal_v',nomV);
   localStorage.setItem('batt_capacity_ah',capAh);
@@ -4939,7 +4983,7 @@ function saveSettings(){
   } else if(providerChanged&&mapInitialized){
     // Ganti sumber peta di tengah jalan → reload style + geocoder + routing otomatis ikut MAP_PROVIDER baru
     setMapStyle(currentStyle);
-    log('Sumber peta diganti ke '+(MAP_PROVIDER==='osm'?'OSM (Gratis)':'Mapbox'),'sys');
+    log('Sumber peta diganti ke '+(MAP_PROVIDER==='osm'?'OSM (Gratis)':MAP_PROVIDER==='maptiler'?'MapTiler':'Mapbox'),'sys');
   }
   updateRangeEstimate();
   restartDashRotation(); // terapkan toggle/interval baru langsung tanpa perlu reconnect
