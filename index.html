@@ -590,10 +590,17 @@ body.landscape-mode .screen { display:none!important; }
 body.landscape-mode #screen-navigasi { display:flex!important; height:100dvh!important; }
 body.landscape-mode .nav-searchbar,
 body.landscape-mode .nav-bottom-bar,
-body.landscape-mode .nav-mode-bar,
+body.landscape-mode .nav-mode-btns,
 body.landscape-mode .dest-panel,
-body.landscape-mode #spdOverlay { display:none!important; }
+body.landscape-mode #spdOverlay,
+body.landscape-mode .route-bar,
+body.landscape-mode #mapAttribution { display:none!important; }
 body.landscape-mode #dashHUD { display:flex!important; }
+
+/* Portrait + tab Navigasi aktif: header & tab hilang, peta full */
+body.nav-fullscreen .topbar,
+body.nav-fullscreen .tabs { display:none!important; }
+body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 
 /* ── HUD container — posisi di dalam #screen-navigasi ── */
 #dashHUD {
@@ -1126,6 +1133,11 @@ body.landscape-mode #dashHUD { display:flex!important; }
 
   <!-- Bottom bar (redesign) -->
   <div class="nav-bottom-bar">
+    <!-- Tombol kembali ke Home — hanya terlihat saat nav-fullscreen (portrait, header tersembunyi) -->
+    <button class="nav-ctrl-btn" id="navBackBtn" onclick="switchTab('home',document.querySelector('.tab'))" style="display:none">
+      <span class="nb-icon">🏠</span>
+      <span class="nb-label">Home</span>
+    </button>
     <!-- BLE / Dashboard -->
     <button class="nav-ctrl-btn" id="btNavBtn" onclick="onBtClick()">
       <span class="nb-icon" id="btNavDot">○</span>
@@ -3445,22 +3457,21 @@ const MAP_STYLES_OSM={
   day: osmRasterStyle(
     ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png','https://b.tile.openstreetmap.org/{z}/{x}/{y}.png','https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'],
     '© OpenStreetMap contributors'),
-  // Malam: CARTO Voyager Dark — lebih terang & kontras dari dark_all (hitam pekat),
-  // jalan/label tetap terlihat jelas, warna navy/biru gelap seperti referensi.
-  // Alternatif: dark_matter_no_labels (lebih gelap), rastertiles/voyager (terang neutral)
-  night: osmRasterStyle(
-    ['https://a.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
-     'https://b.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
-     'https://c.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
-     'https://d.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png'],
-    '© OpenStreetMap contributors © CARTO'),
-  // Malam versi lebih terang (Voyager) — uncomment kalau mau style lebih mirip referensi
-  // night: osmRasterStyle(
-  //   ['https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-  //    'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-  //    'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-  //    'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
-  //   '© OpenStreetMap contributors © CARTO'),
+  // Malam: dark background CARTO + label OSM terpisah di atasnya.
+  // dark_matter_no_labels = background gelap kontras tanpa teks,
+  // dark_only_labels = teks jalan/nama tempat saja — digabung hasilnya terbaca.
+  night: osmRasterStyleMulti([
+    { id:'night-base', tiles:[
+      'https://a.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
+      'https://b.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
+      'https://c.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png',
+      'https://d.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}.png'] },
+    { id:'night-labels', tiles:[
+      'https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+      'https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+      'https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+      'https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png'] },
+  ], '© OpenStreetMap contributors © CARTO'),
   // Satelit: imagery gratis Esri (tanpa key) + layer label/jalan/batas di atasnya → hybrid
   satellite: osmRasterStyleMulti([
     { id:'imagery', tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] },
@@ -4949,15 +4960,24 @@ function saveSettings(){
   let dashRotateSec = parseInt(document.getElementById('inDashRotateSec').value)||5;
   dashRotateSec = Math.min(60, Math.max(2, dashRotateSec));
   if(!Object.values(dashToggles).some(v=>v)){
-    alert('Pilih minimal 1 data untuk ditampilkan di layar dashboard motor.');
+    closeModal('settingsModal');
+    setTimeout(()=>showToast('⚠️ Pilih minimal 1 data untuk layar dashboard motor'), 100);
     return;
   }
   // Clamp ke batas wajar — terlalu kecil bikin teks ngga kebaca, terlalu besar
   // bikin proses encode JPEG adaptif (cari quality yg muat 7000 char) jadi berat
   snapW=Math.min(1024,Math.max(64,snapW));
   snapH=Math.min(1024,Math.max(64,snapH));
-  if(pendingProvider==='mapbox' && !tok){alert('Mode Mapbox butuh token! Isi token, atau pilih OSM/MapTiler.');return;}
-  if(pendingProvider==='maptiler' && !maptilerKey){alert('Mode MapTiler butuh API key! Daftar gratis di maptiler.com, atau pilih OSM.');return;}
+  if(pendingProvider==='mapbox' && !tok){
+    closeModal('settingsModal');
+    setTimeout(()=>showToast('⚠️ Mapbox butuh token. Isi token atau pilih OSM/MapTiler.'),100);
+    return;
+  }
+  if(pendingProvider==='maptiler' && !maptilerKey){
+    closeModal('settingsModal');
+    setTimeout(()=>showToast('⚠️ MapTiler butuh API key. Daftar gratis di maptiler.com.'),100);
+    return;
+  }
   const providerChanged = pendingProvider !== MAP_PROVIDER;
   MAPBOX_TOKEN=tok; MAPTILER_KEY=maptilerKey; MAP_PROVIDER=pendingProvider;
   if(typeof mapboxgl!=='undefined') mapboxgl.accessToken=MAPBOX_TOKEN||'no-token-needed-for-osm';
@@ -4998,6 +5018,11 @@ function switchTab(name,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   el.classList.add('active');
+  // Portrait: sembunyikan topbar & tabs saat di tab Navigasi untuk peta lebih luas
+  const isNavFull = name==='navigasi' && !document.body.classList.contains('landscape-mode');
+  document.body.classList.toggle('nav-fullscreen', isNavFull);
+  const backBtn = document.getElementById('navBackBtn');
+  if(backBtn) backBtn.style.display = isNavFull ? 'flex' : 'none';
   if(name==='diagnosis') setTimeout(drawChart,60);
   if(name==='navigasi'){
     if(canInitMap()&&!mapInitialized) setTimeout(initMap,300);
