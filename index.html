@@ -578,72 +578,105 @@ body.light .ble-log{box-shadow:none}
 .garasi-swatch-label{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ═══════════════════════════════════════════
-   LANDSCAPE DASHBOARD MODE
-   Aktif otomatis saat layar landscape.
-   - Topbar & tab bar disembunyikan
-   - Tab navigasi dipaksa tampil full screen
-   - Peta mengisi seluruh layar
-   - Data tampil sebagai 2 overlay transparan di sudut kiri & kanan atas
+   LANDSCAPE DASHBOARD MODE — REDESIGN
+   Peta penuh, overlay bersih & minimal
 ═══════════════════════════════════════════ */
-@media (orientation:landscape){
-  /* Sembunyikan chrome app */
-  body.landscape-mode .topbar,
-  body.landscape-mode .tabs { display:none!important; }
+body.landscape-mode {
+  max-width:100vw!important;
+}
+body.landscape-mode .topbar,
+body.landscape-mode .tabs { display:none!important; }
+body.landscape-mode .screen { display:none!important; }
+body.landscape-mode #screen-navigasi { display:flex!important; height:100dvh!important; }
+body.landscape-mode .nav-searchbar,
+body.landscape-mode .nav-bottom-bar,
+body.landscape-mode .nav-mode-bar,
+body.landscape-mode .dest-panel,
+body.landscape-mode #spdOverlay { display:none!important; }
+body.landscape-mode #dashHUD { display:flex!important; }
 
-  /* Paksa container app penuh layar */
-  body.landscape-mode { max-width:100vw; }
-
-  /* Sembunyikan semua tab kecuali navigasi */
-  body.landscape-mode .screen { display:none!important; }
-  body.landscape-mode #screen-navigasi { display:flex!important; }
-
-  /* Peta penuh layar */
-  body.landscape-mode #screen-navigasi { height:100vh; }
-
-  /* Sembunyikan elemen navigasi yang tidak perlu di dashboard */
-  body.landscape-mode .nav-search-bar,
-  body.landscape-mode .nav-bottom-bar,
-  body.landscape-mode .nav-mode-bar,
-  body.landscape-mode .dest-panel { display:none!important; }
-
-  /* Route bar (instruksi navigasi) tetap tapi diperkecil & dipindah ke bawah */
-  body.landscape-mode .route-bar {
-    top:auto!important; bottom:0!important; left:0!important; right:0!important;
-    width:100%!important; border-radius:0!important;
-    padding:6px 12px!important; min-height:0!important;
-  }
-
-  /* Overlay widget kiri atas: Kecepatan + SOC */
-  body.landscape-mode #dashOverlayLeft { display:flex; }
-
-  /* Overlay widget kanan atas: Range + nama jalan saat tidak navigasi */
-  body.landscape-mode #dashOverlayRight { display:flex; }
+/* ── HUD container — posisi di dalam #screen-navigasi ── */
+#dashHUD {
+  display:none;
+  position:absolute; inset:0; z-index:15;
+  pointer-events:none;
+  flex-direction:column;
+  justify-content:space-between;
 }
 
-/* Widget overlay dashboard — disembunyikan di portrait */
-.dash-overlay-widget {
-  display:none; /* default — JS/media query yang nyalain */
-  position:absolute; top:10px; z-index:20; pointer-events:none;
-  flex-direction:column; gap:2px;
-  background:rgba(0,0,0,0.45); backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:12px; padding:8px 14px;
-  min-width:90px;
+/* ── TOP BAR ── */
+.hud-top {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 14px;
+  background:linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%);
 }
-#dashOverlayLeft  { left:10px; align-items:flex-start; }
-#dashOverlayRight { right:10px; align-items:flex-end; }
+.hud-top-left { display:flex; align-items:center; gap:12px; }
+.hud-clock {
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px;
+  color:#fff; letter-spacing:1px; line-height:1;
+}
+.hud-gps {
+  font-size:11px; font-weight:600; padding:2px 7px;
+  border-radius:20px; border:1px solid;
+  line-height:1.4;
+}
+.hud-gps.ok  { color:#00e676; border-color:rgba(0,230,118,.4); background:rgba(0,230,118,.1); }
+.hud-gps.off { color:#ff5252; border-color:rgba(255,82,82,.4);  background:rgba(255,82,82,.1); }
+.hud-top-right { display:flex; align-items:center; gap:16px; }
+.hud-soc {
+  font-family:'Rajdhani',sans-serif; font-weight:800; font-size:24px;
+  color:var(--green); line-height:1;
+}
+.hud-soc.low { color:#ff5252; }
+.hud-range {
+  font-size:13px; font-weight:700; color:rgba(255,255,255,.75);
+  line-height:1;
+}
+.hud-range span { font-size:10px; font-weight:600; color:rgba(255,255,255,.4); }
 
-.dash-ov-big {
-  font-family:'Rajdhani',sans-serif; font-weight:800; font-size:38px;
-  line-height:1; color:#fff; letter-spacing:-1px;
+/* ── CENTER SPEED ── */
+.hud-center {
+  display:flex; flex-direction:column;
+  align-items:flex-start; justify-content:center;
+  padding:0 20px; flex:1;
 }
-.dash-ov-unit { font-size:11px; color:rgba(255,255,255,.5); font-weight:600; margin-top:-2px; }
-.dash-ov-label { font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.5px; }
-.dash-ov-sep { width:100%; height:1px; background:rgba(255,255,255,.08); margin:4px 0; }
-.dash-ov-soc { font-size:18px; font-weight:700; color:var(--green); }
-.dash-ov-range { font-size:18px; font-weight:700; color:var(--green); text-align:right; }
-.dash-ov-nav { font-size:11px; color:rgba(255,255,255,.7); max-width:140px; text-align:right;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+.hud-spd {
+  font-family:'Rajdhani',sans-serif; font-weight:900;
+  font-size:clamp(72px, 18vw, 130px);
+  color:#fff; line-height:.9; letter-spacing:-3px;
+  text-shadow: 0 2px 20px rgba(0,0,0,.6);
+}
+.hud-spd-unit {
+  font-size:16px; font-weight:600; color:rgba(255,255,255,.45);
+  letter-spacing:3px; text-transform:uppercase; margin-top:4px;
+}
+
+/* ── NAV INSTRUCTION (saat navigasi aktif) ── */
+.hud-nav-instruction {
+  display:none;
+  align-items:center; gap:10px;
+  background:rgba(0,0,0,0.5); backdrop-filter:blur(8px);
+  border-radius:10px; padding:7px 12px;
+  max-width:55vw; pointer-events:none;
+  margin-top:8px;
+}
+.hud-nav-instruction.show { display:flex; }
+.hud-nav-arrow { font-size:18px; flex-shrink:0; }
+.hud-nav-text  { font-size:12px; font-weight:600; color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ── BOTTOM BAR ── */
+.hud-bottom {
+  display:flex; align-items:center; justify-content:space-around;
+  padding:5px 14px 8px;
+  background:linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+}
+.hud-bottom-item { display:flex; flex-direction:column; align-items:center; gap:1px; }
+.hud-bottom-label { font-size:9px; font-weight:700; color:rgba(255,255,255,.35);
+  text-transform:uppercase; letter-spacing:.8px; }
+.hud-bottom-val { font-family:'Rajdhani',sans-serif; font-size:17px;
+  font-weight:700; color:#fff; line-height:1; }
+.hud-bottom-div { width:1px; height:28px; background:rgba(255,255,255,.1); }
 </style>
 </head>
 <body>
@@ -869,23 +902,55 @@ body.light .ble-log{box-shadow:none}
 <!-- ══════ NAVIGASI — FULL SCREEN ══════ -->
 <div class="screen" id="screen-navigasi" style="position:relative;overflow:hidden">
 
-  <!-- ── LANDSCAPE DASHBOARD OVERLAY WIDGETS ── -->
-  <!-- Kiri atas: Kecepatan + SOC -->
-  <div class="dash-overlay-widget" id="dashOverlayLeft">
-    <div class="dash-ov-label">Kecepatan</div>
-    <div class="dash-ov-big" id="dashOvSpd">0</div>
-    <div class="dash-ov-unit">km/h</div>
-    <div class="dash-ov-sep"></div>
-    <div class="dash-ov-label">SOC Baterai</div>
-    <div class="dash-ov-soc" id="dashOvSoc">— %</div>
-  </div>
-  <!-- Kanan atas: Range + instruksi navigasi (kalau aktif) -->
-  <div class="dash-overlay-widget" id="dashOverlayRight">
-    <div class="dash-ov-label">Sisa Jarak</div>
-    <div class="dash-ov-range" id="dashOvRange">— km</div>
-    <div id="dashOvNavWrap" style="display:none">
-      <div class="dash-ov-sep"></div>
-      <div class="dash-ov-nav" id="dashOvNavText">—</div>
+  <!-- ══ LANDSCAPE DASHBOARD HUD ══
+       Semua elemen pointer-events:none kecuali yg perlu interaksi.
+       Diatur via #dashHUD display:none (portrait) / flex (landscape).  -->
+  <div id="dashHUD">
+    <!-- TOP BAR: jam · GPS · SOC · range -->
+    <div class="hud-top">
+      <div class="hud-top-left">
+        <div class="hud-clock" id="hudClock">--:--</div>
+        <div class="hud-gps off" id="hudGps">GPS</div>
+      </div>
+      <div class="hud-top-right">
+        <div>
+          <div class="hud-range"><span>RANGE </span><span id="hudRange">—</span> km</div>
+        </div>
+        <div class="hud-soc" id="hudSoc">—%</div>
+      </div>
+    </div>
+
+    <!-- CENTER: angka kecepatan besar + instruksi navigasi di bawahnya -->
+    <div class="hud-center">
+      <div class="hud-spd" id="hudSpd">0</div>
+      <div class="hud-spd-unit">km/h</div>
+      <div class="hud-nav-instruction" id="hudNavInstr">
+        <div class="hud-nav-arrow" id="hudNavArrow">↑</div>
+        <div class="hud-nav-text"  id="hudNavText">—</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR: ODO · TRIP · efisiensi -->
+    <div class="hud-bottom">
+      <div class="hud-bottom-item">
+        <div class="hud-bottom-label">ODO</div>
+        <div class="hud-bottom-val" id="hudOdo">—</div>
+      </div>
+      <div class="hud-bottom-div"></div>
+      <div class="hud-bottom-item">
+        <div class="hud-bottom-label">TRIP</div>
+        <div class="hud-bottom-val" id="hudTrip">0.0</div>
+      </div>
+      <div class="hud-bottom-div"></div>
+      <div class="hud-bottom-item">
+        <div class="hud-bottom-label">EFISIENSI</div>
+        <div class="hud-bottom-val" id="hudEff">—</div>
+      </div>
+      <div class="hud-bottom-div"></div>
+      <div class="hud-bottom-item">
+        <div class="hud-bottom-label">SOH</div>
+        <div class="hud-bottom-val" id="hudSoh">—</div>
+      </div>
     </div>
   </div>
 
@@ -1681,28 +1746,60 @@ function updateSpdSub(){
 }
 
 // ── LANDSCAPE DASHBOARD OVERLAY ──
+// ── LANDSCAPE HUD: update semua elemen ──
+let hudClockTimer = null;
+function updateHudClock(){
+  const now = new Date();
+  const hh = now.getHours().toString().padStart(2,'0');
+  const mm = now.getMinutes().toString().padStart(2,'0');
+  const el = document.getElementById('hudClock');
+  if(el) el.textContent = hh+':'+mm;
+}
+
 function updateDashOverlay(){
   if(!document.body.classList.contains('landscape-mode')) return;
-  const el = id => document.getElementById(id);
+  const $ = id => document.getElementById(id);
+
   // Kecepatan
-  el('dashOvSpd').textContent = motoData.spd ?? 0;
+  $('hudSpd').textContent = motoData.spd ?? 0;
+
   // SOC
   const soc = motoData.soc;
-  const socEl = el('dashOvSoc');
+  const socEl = $('hudSoc');
   socEl.textContent = soc != null ? soc+'%' : '—%';
-  socEl.style.color = soc != null && soc <= 20 ? '#ff5252' : 'var(--green)';
+  socEl.classList.toggle('low', soc != null && soc <= 20);
+
   // Range
-  el('dashOvRange').textContent = lastRangeKm > 0 ? lastRangeKm.toFixed(1)+' km' : '—';
-  // Instruksi navigasi (hanya saat navActive)
-  const navWrap = el('dashOvNavWrap');
+  $('hudRange').textContent = lastRangeKm > 0 ? lastRangeKm.toFixed(1) : '—';
+
+  // ODO & Trip
+  $('hudOdo').textContent = motoData.odo > 0 ? Math.round(motoData.odo)+' km' : '—';
+  const tripKm = Math.max(0, motoData.odo - (tripStartOdo ?? motoData.odo));
+  $('hudTrip').textContent = tripKm.toFixed(1)+' km';
+
+  // Efisiensi
+  const eff = (tripEnergyWh > 0 && tripKm > 0.3) ? (tripEnergyWh/tripKm).toFixed(1) : REF_WHKM.toFixed(1);
+  $('hudEff').textContent = eff+' Wh/k';
+
+  // SOH
+  $('hudSoh').textContent = motoData.soh != null ? motoData.soh+'%' : '—';
+
+  // GPS status
+  const gpsEl = $('hudGps');
+  const hasGps = userLat != null;
+  gpsEl.textContent = hasGps ? 'GPS OK' : 'NO GPS';
+  gpsEl.className = 'hud-gps ' + (hasGps ? 'ok' : 'off');
+
+  // Instruksi navigasi
+  const instrEl = $('hudNavInstr');
   if(navActive){
-    const instr = el('rbInstruction');
-    const dist  = el('rbArrowDist');
-    const text  = (dist?.textContent||'') + ' ' + (instr?.textContent||'');
-    el('dashOvNavText').textContent = text.trim() || '—';
-    navWrap.style.display = 'block';
+    const dist  = $('rbArrowDist')?.textContent || '';
+    const instr = $('rbInstruction')?.textContent || '';
+    $('hudNavText').textContent = (dist + ' · ' + instr).trim();
+    // Ambil arah dari polygon navigasi untuk teks arrow sederhana
+    instrEl.classList.add('show');
   } else {
-    navWrap.style.display = 'none';
+    instrEl.classList.remove('show');
   }
 }
 
@@ -1710,25 +1807,27 @@ function applyLandscapeMode(){
   const isLandscape = window.innerWidth > window.innerHeight;
   document.body.classList.toggle('landscape-mode', isLandscape);
   if(isLandscape){
-    // Pastikan tab navigasi aktif saat landscape (supaya peta kelihatan)
+    // Aktifkan tab navigasi supaya peta kelihatan
     const navScreen = document.getElementById('screen-navigasi');
-    const wasActive = navScreen?.classList.contains('active');
-    if(!wasActive){
-      // Aktifkan tab navigasi tanpa mengubah state tab normal (biar balik ke tab sebelumnya saat portrait)
+    if(!navScreen?.classList.contains('active')){
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
       navScreen?.classList.add('active');
     }
-    // Init peta kalau belum
+    // Init atau resize peta
     if(canInitMap()&&!mapInitialized) setTimeout(initMap,300);
     else if(mapInstance) setTimeout(()=>mapInstance.resize(),100);
+    // Start clock ticker
+    updateHudClock();
+    if(!hudClockTimer) hudClockTimer = setInterval(updateHudClock, 30000);
     updateDashOverlay();
   } else {
-    // Landscape → portrait: kembalikan tab yang sebelumnya aktif
-    // Tab yang "benar" sudah tersimpan di lastActiveTab
-    if(lastActiveTab && lastActiveTab!=='navigasi'){
+    // Portrait: kembalikan tab sebelumnya
+    if(lastActiveTab && lastActiveTab !== 'navigasi'){
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
       document.getElementById('screen-'+lastActiveTab)?.classList.add('active');
     }
+    // Stop clock ticker — tidak perlu saat portrait
+    if(hudClockTimer){ clearInterval(hudClockTimer); hudClockTimer=null; }
   }
 }
 
