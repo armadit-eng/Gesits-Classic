@@ -714,6 +714,61 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
   text-shadow:0 1px 6px rgba(0,0,0,.9);
 }
 .hud-bottom-div { width:1px; height:28px; background:rgba(255,255,255,.15); }
+
+/* ── SPEED ROLLING ANIMATION ── */
+/* Container untuk efek gulir odometer */
+.spd-roller {
+  display:inline-block;
+  overflow:hidden;
+  line-height:1;
+  vertical-align:bottom;
+}
+.spd-roller-inner {
+  display:flex;
+  flex-direction:column;
+  transition:transform 0.25s cubic-bezier(0.22,0.61,0.36,1);
+  will-change:transform;
+}
+.spd-roller-digit {
+  display:block;
+  text-align:center;
+  line-height:1;
+}
+
+/* ── HUD SPEED ARC (landscape) ── */
+.hud-arc-wrap {
+  position:absolute;
+  left:0; right:0; top:0; bottom:0;
+  pointer-events:none;
+  z-index:0;
+}
+#hudArcSvg {
+  position:absolute;
+  left:4px; bottom:4px;
+  width:min(42vh, 220px);
+  height:min(42vh, 220px);
+  opacity:0.45;
+  overflow:visible;
+}
+#hudArcTrack { transition:none; }
+#hudArcFill  { transition:stroke-dashoffset 0.3s cubic-bezier(0.22,0.61,0.36,1); }
+
+/* Widget cuaca di Home */
+.home-weather-widget {
+  margin:0 14px 10px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.hww-icon { font-size:28px; flex-shrink:0; }
+.hww-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+.hww-mood { font-size:14px; font-weight:700; color:var(--text); }
+.hww-detail { font-size:11px; color:var(--muted); font-weight:500; }
+.hww-refresh { font-size:11px; color:var(--muted); cursor:pointer; padding:4px; flex-shrink:0; opacity:.6; }
 </style>
 </head>
 <body>
@@ -758,6 +813,16 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 <div class="screen active" id="screen-home">
   <div class="moto-hero">
     <img class="moto-img" src="gesits-motor.png" alt="GESITS" style="object-fit:contain">
+  </div>
+
+  <!-- Widget Mood Cuaca Riding -->
+  <div class="home-weather-widget" id="homeWeatherWidget" style="display:none">
+    <div class="hww-icon" id="hwwIcon">🌤️</div>
+    <div class="hww-body">
+      <div class="hww-mood" id="hwwMood">Memuat cuaca...</div>
+      <div class="hww-detail" id="hwwDetail"></div>
+    </div>
+    <div class="hww-refresh" onclick="fetchHomeWeather()" title="Refresh cuaca">↻</div>
   </div>
   <div class="status-grid">
     <div class="stat-card">
@@ -970,6 +1035,22 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 
     <!-- CENTER: angka kecepatan besar + instruksi navigasi di bawahnya -->
     <div class="hud-center">
+      <!-- Arc kecepatan — SVG di bawah angka, hanya kelihatan di landscape -->
+      <div class="hud-arc-wrap" aria-hidden="true">
+        <svg id="hudArcSvg" viewBox="0 0 200 200" fill="none">
+          <!-- Track arc: 220° dari bawah-kiri ke bawah-kanan -->
+          <path id="hudArcTrack"
+            d="M 20 170 A 90 90 0 1 1 180 170"
+            stroke="rgba(255,255,255,0.12)" stroke-width="6"
+            stroke-linecap="round" fill="none"/>
+          <!-- Fill arc: panjang sesuai kecepatan -->
+          <path id="hudArcFill"
+            d="M 20 170 A 90 90 0 1 1 180 170"
+            stroke="var(--green)" stroke-width="6"
+            stroke-linecap="round" fill="none"
+            stroke-dasharray="283" stroke-dashoffset="283"/>
+        </svg>
+      </div>
       <div class="hud-spd-wrap">
         <div class="hud-spd" id="hudSpd">0</div>
         <div class="hud-spd-unit">km/h</div>
@@ -1810,6 +1891,165 @@ function updateTripVal(){
 }
 function updateSpdSub(){
   document.getElementById('spdSub').textContent = `SPD: ${motoData.spd} km/h · ODO: ${motoData.odo} km`;
+}
+
+// ══════════════════════════════════════════════════════════
+// ANIMASI ROLLING KECEPATAN (odometer style)
+// ══════════════════════════════════════════════════════════
+// Setiap elemen yang tampilkan kecepatan (overlay, speedo, HUD)
+// menggunakan animSpdTo() supaya transisi terasa smooth.
+
+let _animSpdCurrent = {};  // { elId: currentValue }
+
+function buildRollerEl(el){
+  // Buat struktur roller untuk elemen ini (hanya sekali)
+  if(el.dataset.rollerBuilt) return;
+  el.dataset.rollerBuilt = '1';
+  el.style.display = 'inline-flex';
+  el.style.gap = '0';
+  el.style.overflow = 'hidden';
+  el.style.lineHeight = '1';
+  el.style.verticalAlign = 'bottom';
+}
+
+function animSpdTo(elId, targetVal, maxVal=120){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const target = Math.max(0, Math.min(maxVal, Math.round(targetVal)));
+  const current = _animSpdCurrent[elId] ?? 0;
+  if(current === target){ el.textContent = target; return; }
+  _animSpdCurrent[elId] = target;
+
+  // Animasi CSS counter menggunakan clip + transform pada digit kolom
+  // Pendekatan ringan: CSS custom property + @property atau transition transform
+  const diff = target - current;
+  const dir = diff > 0 ? -1 : 1; // scroll ke atas kalau naik
+
+  // Buat 3 "frame" teks: angka sebelum, current, sesudah — animate via translateY
+  const prev = el.querySelector('.spd-roller-inner');
+  if(prev) prev.remove();
+
+  const inner = document.createElement('div');
+  inner.className = 'spd-roller-inner';
+
+  // Tampilkan 2 angka: [current, target] scroll ke arah yang benar
+  const fromVal = document.createElement('span');
+  fromVal.className = 'spd-roller-digit';
+  fromVal.textContent = current;
+  const toVal = document.createElement('span');
+  toVal.className = 'spd-roller-digit';
+  toVal.textContent = target;
+
+  if(dir === -1){
+    // Naik: mulai dari bawah (current), scroll ke atas (target)
+    inner.appendChild(toVal);
+    inner.appendChild(fromVal);
+    inner.style.transform = 'translateY(-100%)'; // mulai tampilkan "from" (bawah)
+    el.innerHTML = '';
+    el.appendChild(inner);
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        inner.style.transition = 'transform 0.22s cubic-bezier(0.22,0.61,0.36,1)';
+        inner.style.transform = 'translateY(0%)'; // scroll ke atas → tampilkan "to"
+      });
+    });
+  } else {
+    // Turun: mulai dari atas (current), scroll ke bawah (target)
+    inner.appendChild(fromVal);
+    inner.appendChild(toVal);
+    inner.style.transform = 'translateY(0%)';
+    el.innerHTML = '';
+    el.appendChild(inner);
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        inner.style.transition = 'transform 0.22s cubic-bezier(0.22,0.61,0.36,1)';
+        inner.style.transform = 'translateY(-100%)';
+      });
+    });
+  }
+}
+
+// ── HUD ARC update ──
+// Arc total: path "M 20 170 A 90 90 0 1 1 180 170" ≈ 283px panjang (220° lingkaran r=90)
+const HUD_ARC_LEN = 283;
+const HUD_SPD_MAX = 80; // kecepatan maksimum untuk arc penuh (disesuaikan motor listrik)
+let _lastArcSpd = -1;
+function updateHudArc(spd){
+  if(!document.body.classList.contains('landscape-mode')) return;
+  const rounded = Math.round(Math.min(spd, HUD_SPD_MAX));
+  if(rounded === _lastArcSpd) return;
+  _lastArcSpd = rounded;
+  const fill = document.getElementById('hudArcFill');
+  if(!fill) return;
+  const progress = rounded / HUD_SPD_MAX;
+  const offset = HUD_ARC_LEN * (1 - progress);
+  fill.style.strokeDashoffset = offset.toFixed(1);
+  // Warna arc: hijau → kuning → merah sesuai kecepatan
+  const color = spd < 40 ? 'var(--green)' : spd < 65 ? '#ffd740' : '#ff5252';
+  fill.setAttribute('stroke', color);
+}
+
+// ══════════════════════════════════════════════════════════
+// WIDGET MOOD CUACA RIDING (Home screen)
+// ══════════════════════════════════════════════════════════
+let _homeWeatherTs = 0;
+const HOME_WEATHER_TTL = 10 * 60 * 1000; // refresh tiap 10 menit
+
+async function fetchHomeWeather(force=false){
+  if(!userLat || !userLng){ return; } // GPS belum siap
+  const now = Date.now();
+  if(!force && now - _homeWeatherTs < HOME_WEATHER_TTL) return;
+  _homeWeatherTs = now;
+  const w = document.getElementById('homeWeatherWidget');
+  if(!w) return;
+  w.style.display = 'flex';
+  document.getElementById('hwwMood').textContent = 'Memuat cuaca...';
+  document.getElementById('hwwDetail').textContent = '';
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}`+
+      `&current=temperature_2m,weather_code,wind_speed_10m,precipitation_probability`+
+      `&timezone=auto`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if(!d.current){ w.style.display='none'; return; }
+    const temp  = Math.round(d.current.temperature_2m);
+    const wind  = Math.round(d.current.wind_speed_10m);
+    const rain  = d.current.precipitation_probability ?? 0;
+    const code  = d.current.weather_code;
+    const [icon, desc] = wmoInfo(code);
+
+    // Mood kalimat — prioritaskan kondisi paling relevan untuk rider
+    let mood, moodIcon;
+    if(rain >= 70){
+      mood = 'Kemungkinan hujan, siapkan jas hujan';
+      moodIcon = '🌧️';
+    } else if(wind >= 35){
+      mood = `Angin kencang ${wind} km/h — waspadai kestabilan`;
+      moodIcon = '🌬️';
+    } else if(temp >= 36){
+      mood = `Panas terik ${temp}°C — hidrasi cukup ya`;
+      moodIcon = '🥵';
+    } else if(rain >= 40){
+      mood = `Ada peluang hujan ${rain}% — bawa jas hujan`;
+      moodIcon = '🌦️';
+    } else if(temp >= 30 && wind < 20 && rain < 30){
+      mood = 'Cuaca ideal untuk riding';
+      moodIcon = '🤩';
+    } else if(temp < 22){
+      mood = `Sejuk ${temp}°C — nyaman untuk riding`;
+      moodIcon = '😎';
+    } else {
+      mood = `${desc} — riding aman`;
+      moodIcon = icon;
+    }
+
+    document.getElementById('hwwIcon').textContent = moodIcon;
+    document.getElementById('hwwMood').textContent = mood;
+    document.getElementById('hwwDetail').textContent =
+      `${temp}°C · 💨 ${wind} km/h · ☔ ${rain}%`;
+  } catch(e){
+    document.getElementById('hwwMood').textContent = 'Cuaca tidak tersedia';
+  }
 }
 
 // ── LANDSCAPE DASHBOARD OVERLAY ──
@@ -2879,6 +3119,10 @@ function parseResponse(raw){
     case 'SPD':
       if(isNaN(num)) return;
       motoData.spd=num; updateSpeedo(num);
+      animSpdTo('overlaySpd', num);   // portrait nav speed overlay
+      animSpdTo('hudSpd', num);       // landscape HUD
+      animSpdTo('speedoVal', num);    // diagnosis speedometer
+      updateHudArc(num);              // arc landscape
       speedHistory.push(num); speedHistory.shift(); drawChart();
       updateSpdSub();
       updateRidingScore();
@@ -3346,7 +3590,7 @@ function updateSpeedo(spd){
   const pct=Math.min(spd/120,1);
   document.getElementById('speedArc').style.strokeDashoffset=314*(1-pct);
   document.getElementById('needle').setAttribute('transform',`rotate(${-90+pct*180} 120 130)`);
-  document.getElementById('speedoVal').textContent=Math.round(spd);
+  // speedoVal text dihandle oleh animSpdTo() untuk efek roller
 }
 
 // ── CHART ──
@@ -3616,6 +3860,7 @@ function initMap(){
       if(pos.coords.altitude!=null) userAltitude=pos.coords.altitude;
       userMarker.setLngLat([userLng,userLat]);
       recordTripPoint(userLng,userLat);
+      fetchHomeWeather(); // update cuaca Home kalau TTL sudah lewat
       // Arrow selalu pointing up — map bearing yang berputar
       if(navActive){
         checkReroute();
@@ -5147,6 +5392,7 @@ function switchTab(name,el){
   const backBtn = document.getElementById('navBackBtn');
   if(backBtn) backBtn.style.display = isNavFull ? 'flex' : 'none';
   if(name==='diagnosis') setTimeout(drawChart,60);
+  if(name==='home') fetchHomeWeather();
   if(name==='navigasi'){
     if(canInitMap()&&!mapInitialized) setTimeout(initMap,300);
     // Container baru saja jadi visible (display:flex) — Mapbox perlu di-resize
