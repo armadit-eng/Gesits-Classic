@@ -1396,8 +1396,23 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 <!-- ══════ STATS ══════ -->
 <div class="screen" id="screen-stats" style="overflow-y:auto">
 
+  <!-- SHORTCUT RIWAYAT + EXPORT -->
+  <div style="display:flex;gap:8px;padding:12px 14px 4px">
+    <button onclick="openTripHistory()" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;font-family:inherit;color:var(--text)">
+      <span style="font-size:18px">🛣️</span>
+      <div style="text-align:left">
+        <div style="font-size:12px;font-weight:700">Riwayat Perjalanan</div>
+        <div style="font-size:10px;color:var(--muted)" id="statsHistCount">Lihat semua trip →</div>
+      </div>
+    </button>
+    <button onclick="exportTripCsv()" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit;color:var(--text);white-space:nowrap">
+      <span style="font-size:16px">📥</span>
+      <div style="font-size:11px;font-weight:700">Export<br><span style="color:var(--muted);font-size:9px">CSV</span></div>
+    </button>
+  </div>
+
   <!-- SUMMARY CARDS -->
-  <div class="status-grid" style="padding-top:12px">
+  <div class="status-grid" style="padding-top:8px">
     <div class="stat-card">
       <div class="stat-label">Total Jarak</div>
       <div class="stat-value" id="st-km" style="font-size:22px">0</div>
@@ -3663,27 +3678,26 @@ function drawChart(){
   const sx=w/(speedHistory.length-1);
   const maxPow=Math.max(4000, ...powerHistory);
 
-  // Regen area (hijau, di bawah baseline)
-  ctx.beginPath(); ctx.moveTo(0,h);
-  regenHistory.forEach((v,i)=>ctx.lineTo(i*sx, h - Math.min((v/maxPow)*h*0.4, h*0.4)));
-  ctx.lineTo(w,h); ctx.closePath();
+  // Regen area (smooth)
+  const regenPts = regenHistory.map((v,i)=>({x:i*sx, y:h-Math.min((v/maxPow)*h*0.4,h*0.4)}));
+  ctx.beginPath(); ctx.moveTo(0,h); plotSmoothLine(ctx,regenPts);
+  ctx.lineTo(regenPts[regenPts.length-1].x,h); ctx.closePath();
   ctx.fillStyle='rgba(0,230,118,0.15)'; ctx.fill();
 
-  // Power area
-  ctx.beginPath(); ctx.moveTo(0,h);
-  powerHistory.forEach((v,i)=>ctx.lineTo(i*sx, h-(v/maxPow)*h*0.85));
-  ctx.lineTo(w,h); ctx.closePath();
+  // Power area (smooth)
+  const powPts = powerHistory.map((v,i)=>({x:i*sx, y:h-(v/maxPow)*h*0.85}));
+  ctx.beginPath(); ctx.moveTo(0,h); plotSmoothLine(ctx,powPts);
+  ctx.lineTo(powPts[powPts.length-1].x,h); ctx.closePath();
   ctx.fillStyle= ecoModeActive ? 'rgba(0,230,118,0.08)' : 'rgba(255,82,82,0.08)'; ctx.fill();
 
-  // Power line
-  ctx.beginPath();
-  powerHistory.forEach((v,i)=>i===0?ctx.moveTo(0,h-(v/maxPow)*h*0.85):ctx.lineTo(i*sx,h-(v/maxPow)*h*0.85));
+  // Power line (smooth)
+  ctx.beginPath(); plotSmoothLine(ctx,powPts);
   ctx.strokeStyle= ecoModeActive ? '#00e676' : '#ff5252';
   ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
 
-  // Speed line
-  ctx.beginPath();
-  speedHistory.forEach((v,i)=>i===0?ctx.moveTo(0,h-(v/120)*h*0.85):ctx.lineTo(i*sx,h-(v/120)*h*0.85));
+  // Speed line (smooth)
+  const spdPts = speedHistory.map((v,i)=>({x:i*sx, y:h-(v/120)*h*0.85}));
+  ctx.beginPath(); plotSmoothLine(ctx,spdPts);
   ctx.strokeStyle='#00d4ff'; ctx.lineWidth=2; ctx.lineJoin='round';
   ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
 
@@ -5726,6 +5740,7 @@ function renderTripHistory(){
       <div class="trip-item-grid">
         <div><span class="trip-item-lbl">Avg</span>${t.avgSpeed.toFixed(0)} km/h</div>
         <div><span class="trip-item-lbl">Max</span>${t.maxSpeed.toFixed(0)} km/h</div>
+        <div><span class="trip-item-lbl">Durasi</span>${(()=>{const m=t.avgSpeed>0?Math.round((t.distance/t.avgSpeed)*60):null;return m?(m>=60?Math.floor(m/60)+'j '+m%60+'m':m+'m'):'—'})()}</div>
         <div><span class="trip-item-lbl">Energi</span>${t.energyWh.toFixed(0)} Wh</div>
         <div><span class="trip-item-lbl">Efisiensi</span>${t.efficiency? t.efficiency.toFixed(1)+' Wh/km':'—'}</div>
         <div><span class="trip-item-lbl">Regen</span>${t.regenWh?.toFixed(0)||'—'} Wh</div>
@@ -6430,14 +6445,14 @@ function drawStatsChart(canvasId, labels, values, color, fillColor){
     y: pad.top + cH * (1 - v/max)
   }));
 
-  // Fill
+  // Fill (smooth)
   ctx.beginPath(); ctx.moveTo(pts[0].x, pad.top+cH);
-  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  plotSmoothLine(ctx, pts);
   ctx.lineTo(pts[pts.length-1].x, pad.top+cH);
   ctx.closePath(); ctx.fillStyle = fillColor; ctx.fill();
 
-  // Line
-  ctx.beginPath(); pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  // Line (smooth)
+  ctx.beginPath(); plotSmoothLine(ctx, pts);
   ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
 
   // Dots + x labels
@@ -6560,6 +6575,9 @@ function checkGmBadges(){
 
 function renderStatsPage(){
   const hist = getTripHistory();
+  // Update shortcut count
+  const sc = document.getElementById('statsHistCount');
+  if(sc) sc.textContent = hist.length > 0 ? `${hist.length} trip tersimpan →` : 'Lihat semua trip →';
   const totalKm = hist.reduce((s,t)=>s+(t.distance||0),0);
   const effs = hist.filter(t=>t.efficiency>0);
   const avgEff = effs.length ? effs.reduce((s,t)=>s+t.efficiency,0)/effs.length : 0;
@@ -7179,6 +7197,54 @@ function updateChargingEstimate(){
     ? `Penuh ✓`
     : `~${timeStr} lagi penuh · ${Math.round(powerW)}W`;
   el.style.display = 'flex';
+}
+
+// ── SMOOTH BEZIER (Catmull-Rom spline) ──
+function plotSmoothLine(ctx, pts, tension=0.45){
+  if(pts.length < 2) return;
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for(let i=0; i<pts.length-1; i++){
+    const p0 = pts[Math.max(0,i-1)];
+    const p1 = pts[i];
+    const p2 = pts[i+1];
+    const p3 = pts[Math.min(pts.length-1,i+2)];
+    const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
+    const cp1y = p1.y + (p2.y - p0.y) * tension / 3;
+    const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
+    const cp2y = p2.y - (p3.y - p1.y) * tension / 3;
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+  }
+}
+
+// ── EXPORT TRIP HISTORY → CSV ──
+function exportTripCsv(){
+  const hist = getTripHistory();
+  if(!hist.length){ alert('Belum ada data trip untuk diekspor.'); return; }
+  const rows = [['Tanggal','Jarak (km)','Avg Speed (km/h)','Max Speed (km/h)','Energi (Wh)',
+    'Efisiensi (Wh/km)','Regen (Wh)','Daya Maks (W)','Biaya (Rp)','Riding Score','Durasi (mnt)']];
+  hist.forEach(t => {
+    const durMin = t.avgSpeed>0 ? Math.round((t.distance/t.avgSpeed)*60) : '';
+    const biaya  = t.costIDR ? Math.round(t.costIDR) : (t.energyWh>0 ? Math.round((t.energyWh/1000)*1447) : '');
+    rows.push([
+      new Date(t.date).toLocaleString('id-ID'),
+      t.distance.toFixed(2),
+      t.avgSpeed.toFixed(1),
+      t.maxSpeed.toFixed(1),
+      t.energyWh.toFixed(1),
+      t.efficiency ? t.efficiency.toFixed(2) : '',
+      t.regenWh?.toFixed(1) || '',
+      t.maxPowerW?.toFixed(0) || '',
+      biaya,
+      t.ridingScore ?? '',
+      durMin
+    ]);
+  });
+  const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'\"')}"`) .join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `gesits_trips_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
 }
 
 </script>
