@@ -47,6 +47,29 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 #screen-home,#screen-diagnosis,#screen-akun{overflow-y:auto}
 
 /* ── HOME ── */
+/* ── HOME REDESIGN: hero + status bar ── */
+.home-hero{display:flex;gap:0;margin:10px 14px 8px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);height:120px}
+.home-hero-moto{width:130px;flex-shrink:0;background:linear-gradient(135deg,#12182a 0%,#0d1117 100%);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.home-hero-moto::before{content:'';position:absolute;width:160px;height:160px;background:radial-gradient(circle,var(--garasi-glow,rgba(0,230,118,.1)) 0%,transparent 70%);border-radius:50%}
+.home-hero-right{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.home-soc-row{display:flex;align-items:baseline;gap:6px}
+.home-soc-val{font-family:'Rajdhani',sans-serif;font-size:38px;font-weight:800;line-height:1;color:var(--text)}
+.home-soc-sub{font-size:11px;color:var(--muted);font-weight:600}
+.home-range-row{display:flex;align-items:baseline;gap:4px}
+.home-range-val{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--green)}
+.home-range-unit{font-size:11px;color:var(--muted);font-weight:500}
+.home-weather-mini{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text);font-weight:500;overflow:hidden;white-space:nowrap}
+.home-weather-mini span:first-child{font-size:14px;flex-shrink:0}
+/* Status bar compact */
+.home-status-bar{display:flex;align-items:center;margin:0 14px 8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px 12px}
+.hsb-item{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.hsb-label{font-size:8px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.hsb-val{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsb-div{width:1px;height:28px;background:var(--border);flex-shrink:0;margin:0 8px}
+/* Energy grid 2-col di atas energy card */
+.energy-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.energy-grid-item{display:flex;flex-direction:column;gap:3px}
+/* Moto-hero (legacy — masih dipakai garasi virtual) */
 .moto-hero{background:linear-gradient(160deg,#12182a 0%,#0d1117 60%);display:flex;justify-content:center;padding:22px 20px 6px;position:relative;overflow:hidden;flex-shrink:0}
 .moto-hero::before{content:'';position:absolute;width:240px;height:240px;background:radial-gradient(circle,rgba(255,61,61,.12) 0%,transparent 70%);border-radius:50%}
 .moto-img{width:78%;max-width:290px;filter:drop-shadow(0 14px 28px rgba(255,61,61,.25));position:relative;z-index:1}
@@ -811,51 +834,84 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 
 <!-- ══════ HOME ══════ -->
 <div class="screen active" id="screen-home">
-  <div class="moto-hero">
-    <img class="moto-img" src="gesits-motor.png" alt="GESITS" style="object-fit:contain">
+
+  <!-- ── HERO: foto motor kecil + cuaca side by side ── -->
+  <div class="home-hero">
+    <div class="home-hero-moto">
+      <img class="moto-img" src="gesits-motor.png" alt="GESITS" style="object-fit:contain;width:100%;height:100%">
+    </div>
+    <div class="home-hero-right">
+      <!-- SOC besar + riding score -->
+      <div class="home-soc-row">
+        <div class="home-soc-val" id="socVal">—%</div>
+        <div class="home-soc-sub" id="sohSub">SOH —%</div>
+      </div>
+      <div class="home-range-row">
+        <span class="home-range-val" id="rangeVal" style="color:var(--green)">—</span>
+        <span class="home-range-unit">km sisa</span>
+      </div>
+      <!-- Cuaca mood ringkas -->
+      <div id="homeWeatherWidget" class="home-weather-mini" style="display:none">
+        <span id="hwwIcon">🌤️</span>
+        <span id="hwwMood">—</span>
+      </div>
+      <div id="hwwDetail" style="display:none"></div><!-- tetap ada untuk JS compatibility -->
+    </div>
   </div>
 
-  <!-- Widget Mood Cuaca Riding -->
-  <div class="home-weather-widget" id="homeWeatherWidget" style="display:none">
-    <div class="hww-icon" id="hwwIcon">🌤️</div>
-    <div class="hww-body">
-      <div class="hww-mood" id="hwwMood">Memuat cuaca...</div>
-      <div class="hww-detail" id="hwwDetail"></div>
+  <!-- ── STATUS BAR: koneksi + trip + kecepatan dalam 1 baris ── -->
+  <div class="home-status-bar">
+    <div class="hsb-item">
+      <div class="hsb-label">STATUS</div>
+      <div class="hsb-val status-dot off" id="connStatus">Terputus</div>
     </div>
-    <div class="hww-refresh" onclick="fetchHomeWeather()" title="Refresh cuaca">↻</div>
-  </div>
-  <div class="status-grid">
-    <div class="stat-card">
-      <div class="stat-label">Status BLE</div>
-      <div class="status-dot off" id="connStatus">Terputus</div>
+    <div class="hsb-div"></div>
+    <div class="hsb-item">
+      <div class="hsb-label">TERAKHIR</div>
+      <div class="hsb-val" id="lastConn" style="color:var(--muted)">—</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Terakhir Terhubung</div>
-      <div class="stat-value" id="lastConn" style="font-size:13px;color:var(--muted)">—</div>
+    <div class="hsb-div"></div>
+    <div class="hsb-item">
+      <div class="hsb-label">TRIP <span id="tripResetBtn" onclick="openResetTripModal()" style="font-weight:700;cursor:pointer;text-decoration:underline;color:var(--muted);text-transform:none;letter-spacing:0;font-size:9px">RESET</span></div>
+      <div class="hsb-val" id="tripVal">0.0 km</div>
     </div>
-    <div class="stat-card gg">
-      <div class="stat-label">SOC Baterai</div>
-      <div class="stat-value" id="socVal">— %</div>
-      <div class="stat-sub" id="sohSub">SOH: —</div>
-    </div>
-    <div class="stat-card gg">
-      <div class="stat-label">Trip Jarak <span id="tripResetBtn" onclick="openResetTripModal()" style="float:right;cursor:pointer;text-decoration:underline;font-weight:600;text-transform:none;letter-spacing:0">Reset</span></div>
-      <div class="stat-value" id="tripVal">0.0 km</div>
-      <div class="stat-sub" id="spdSub">SPD: — km/h · ODO: — km</div>
+    <div class="hsb-div"></div>
+    <div class="hsb-item">
+      <div class="hsb-label">SPD · ODO</div>
+      <div class="hsb-val" id="spdSub" style="font-size:10px">— · —</div>
     </div>
   </div>
+
+  <!-- ── ENERGY CARD ── -->
   <div class="energy-card">
-    <div class="energy-row"><div class="energy-label">⚡ Sisa Energi</div><div class="energy-val" id="energyVal">— Wh</div></div>
-    <div class="energy-row"><div class="energy-label">🛣️ Estimasi Jarak Tersisa</div><div class="energy-val" id="rangeVal" style="color:var(--green)">— km</div></div>
-    <div class="energy-row"><div class="energy-label">📊 Efisiensi</div><div class="energy-val" id="effVal" style="font-size:12px;font-weight:500;color:var(--muted)">— Wh/km</div></div>
-    <div class="energy-row" style="align-items:center">
-      <div class="energy-label">🏆 Riding Score</div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="energy-val" id="ridingScoreVal" style="font-size:20px;font-weight:900">—</div>
-        <div id="ridingScoreLbl" style="font-size:11px;color:var(--muted)">Belum ada data</div>
+    <!-- Baris utama: 2 kolom -->
+    <div class="energy-grid-2">
+      <div class="energy-grid-item">
+        <div class="energy-label">⚡ Sisa Energi</div>
+        <div class="energy-val" id="energyVal">— Wh</div>
+      </div>
+      <div class="energy-grid-item" style="text-align:right">
+        <div class="energy-label">📊 Efisiensi</div>
+        <div class="energy-val" id="effVal" style="font-size:12px;font-weight:500;color:var(--muted)">— Wh/km</div>
       </div>
     </div>
-    <div id="energyDetailToggle" onclick="toggleEnergyDetail()" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 0 2px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer">
+    <!-- Riding score + ECO toggle dalam 1 baris -->
+    <div class="energy-row" style="align-items:center;border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
+      <div style="display:flex;align-items:center;gap:6px;flex:1">
+        <div class="energy-label">🏆</div>
+        <div class="energy-val" id="ridingScoreVal" style="font-size:18px;font-weight:900">—</div>
+        <div id="ridingScoreLbl" style="font-size:11px;color:var(--muted)">Riding Score</div>
+      </div>
+      <!-- ECO toggle inline -->
+      <button id="ecoBtn" onclick="toggleEcoMode()" style="background:var(--card);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;padding:5px 10px;transition:all .2s;flex-shrink:0">🌿 ECO</button>
+    </div>
+    <!-- ECO feedback compact -->
+    <div id="ecoFeedback" style="display:none;padding:6px 10px;background:rgba(0,230,118,0.1);border-radius:8px;border:1px solid rgba(0,230,118,.3);font-size:11px;color:var(--green);gap:6px;align-items:center;margin-top:6px">
+      <span>🌿</span>
+      <span id="ecoViolationTxt">Riding hemat energi ✓</span>
+    </div>
+    <!-- Detail toggle -->
+    <div id="energyDetailToggle" onclick="toggleEnergyDetail()" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 0 2px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer">
       <span id="energyDetailToggleTxt">Lihat Detail</span><span id="energyDetailToggleArrow" style="font-size:9px;transition:transform .2s">▾</span>
     </div>
     <div id="energyDetailBody" style="display:none">
@@ -866,24 +922,13 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="energy-row"><div class="energy-label">💰 Biaya Listrik Trip</div><div class="energy-val" id="tripCostVal" style="font-size:12px;font-weight:700;color:#ffa726">—</div></div>
     </div>
   </div>
-  <!-- ECO MODE -->
-  <div style="padding:0 14px 10px">
-    <button id="ecoBtn" onclick="toggleEcoMode()" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">🌿 ECO: OFF</button>
-  </div>
-  <div id="ecoFeedback" style="display:none;margin:0 14px 10px;padding:10px 14px;background:rgba(0,230,118,0.1);border:1px solid #00e676;border-radius:10px;align-items:center;gap:10px">
-    <span style="font-size:20px">🌿</span>
-    <div style="flex:1">
-      <div style="font-size:13px;font-weight:700;color:#00e676">Mode Eco Aktif</div>
-      <div style="font-size:11px;color:var(--muted)" id="ecoViolationTxt">Riding hemat energi ✓</div>
-    </div>
+
+  <!-- Install PWA (hidden until available) -->
+  <div style="padding:0 14px 4px" id="installBtn" onclick="installApp()" style="display:none">
+    <button style="width:100%;padding:11px;background:transparent;border:1px solid var(--green);border-radius:12px;color:var(--green);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📲 Install App ke Homescreen</button>
   </div>
 
-  <div class="action-row">
-    <div class="action-btn" onclick="switchTab('diagnosis',document.querySelectorAll('.tab')[1])"><span>🔧</span> Diagnosis <span class="arrow">›</span></div>
-    <div class="action-btn" onclick="switchTab('navigasi',document.querySelectorAll('.tab')[2])"><span>📍</span> Navigasi <span class="arrow">›</span></div>
-    <div class="action-btn full" onclick="openSettings()"><span>⚙️</span> Pengaturan Peta & Energi <span class="arrow">›</span></div>
-    <div class="action-btn full" id="installBtn" onclick="installApp()" style="display:none;border-color:var(--green);color:var(--green)"><span>📲</span> Install App ke Homescreen <span class="arrow">›</span></div>
-  </div>
+  <!-- BLE Dev Log -->
   <div class="ble-log-wrap" id="bleLogWrap" style="display:none">
     <div class="ble-log-hdr">
       <div class="ble-log-title">📡 BLE Serial Log (Developer)</div>
@@ -2044,9 +2089,9 @@ async function fetchHomeWeather(force=false){
     }
 
     document.getElementById('hwwIcon').textContent = moodIcon;
-    document.getElementById('hwwMood').textContent = mood;
-    document.getElementById('hwwDetail').textContent =
-      `${temp}°C · 💨 ${wind} km/h · ☔ ${rain}%`;
+    document.getElementById('hwwMood').textContent = mood + ` · ${temp}°C 💨${wind}`;
+    const w = document.getElementById('homeWeatherWidget');
+    if(w) w.style.display = 'flex';
   } catch(e){
     document.getElementById('hwwMood').textContent = 'Cuaca tidak tersedia';
   }
@@ -6759,10 +6804,11 @@ function getGarasiLivery(){
 
 function applyGarasiLiveryToHome(){
   const l = getGarasiLivery();
-  const heroImg = document.querySelector('.moto-hero .moto-img');
-  const hero = document.querySelector('.moto-hero');
-  if(heroImg) heroImg.style.filter = `${l.filter==='none'?'':l.filter} drop-shadow(0 14px 28px ${l.shadow})`;
-  if(hero) hero.style.setProperty('--moto-glow', l.glow);
+  // Coba selector baru (home redesign) dulu, fallback ke selector lama (garasi preview)
+  const heroImg = document.querySelector('.home-hero-moto .moto-img') || document.querySelector('.moto-hero .moto-img');
+  const hero    = document.querySelector('.home-hero-moto') || document.querySelector('.moto-hero');
+  if(heroImg) heroImg.style.filter = `${l.filter==='none'?'':l.filter} drop-shadow(0 8px 16px ${l.shadow})`;
+  if(hero) hero.style.setProperty('--garasi-glow', l.glow);
 }
 
 function openGarasi(){
