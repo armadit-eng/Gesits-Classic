@@ -48,10 +48,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 
 /* ── HOME ── */
 /* ── HOME REDESIGN: hero + status bar ── */
-.home-hero{display:flex;gap:0;margin:10px 14px 8px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);height:120px}
+.home-hero{display:flex;gap:0;margin:10px 14px 8px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);min-height:110px}
 .home-hero-moto{width:130px;flex-shrink:0;background:linear-gradient(135deg,#12182a 0%,#0d1117 100%);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .home-hero-moto::before{content:'';position:absolute;width:160px;height:160px;background:radial-gradient(circle,var(--garasi-glow,rgba(0,230,118,.1)) 0%,transparent 70%);border-radius:50%}
-.home-hero-right{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.home-hero-right{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:3px}
 .home-soc-row{display:flex;align-items:baseline;gap:6px}
 .home-soc-val{font-family:'Rajdhani',sans-serif;font-size:38px;font-weight:800;line-height:1;color:var(--text)}
 .home-soc-sub{font-size:11px;color:var(--muted);font-weight:600}
@@ -792,6 +792,16 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .hww-mood { font-size:14px; font-weight:700; color:var(--text); }
 .hww-detail { font-size:11px; color:var(--muted); font-weight:500; }
 .hww-refresh { font-size:11px; color:var(--muted); cursor:pointer; padding:4px; flex-shrink:0; opacity:.6; }
+/* ── HOME QUICK ACTIONS ── */
+.home-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 14px}
+.hq-btn{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent}
+.hq-btn:hover{background:var(--card2)}
+.hq-btn:active{background:var(--card2);transform:scale(.97)}
+.hq-icon{font-size:22px;flex-shrink:0}
+.hq-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.hq-label{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap}
+.hq-sub{font-size:10px;color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -877,19 +887,10 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 
   <!-- ── ENERGY CARD ── -->
   <div class="energy-card">
-    <!-- Baris utama: 2 kolom -->
-    <div class="energy-grid-2">
-      <div class="energy-grid-item">
-        <div class="energy-label">⚡ Sisa Energi</div>
-        <div class="energy-val" id="energyVal">— Wh</div>
-      </div>
-      <div class="energy-grid-item" style="text-align:right">
-        <div class="energy-label">📊 Efisiensi</div>
-        <div class="energy-val" id="effVal" style="font-size:12px;font-weight:500;color:var(--muted)">— Wh/km</div>
-      </div>
-    </div>
+    <div class="energy-row"><div class="energy-label">⚡ Sisa Energi</div><div class="energy-val" id="energyVal" style="font-size:15px;font-weight:700">— Wh</div></div>
+    <div class="energy-row"><div class="energy-label">📊 Efisiensi</div><div class="energy-val" id="effVal" style="font-size:12px;font-weight:500;color:var(--muted)">— Wh/km</div></div>
     <!-- Riding score + ECO toggle dalam 1 baris -->
-    <div class="energy-row" style="align-items:center;border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
+    <div class="energy-row" style="align-items:center">
       <div style="display:flex;align-items:center;gap:6px;flex:1">
         <div class="energy-label">🏆</div>
         <div class="energy-val" id="ridingScoreVal" style="font-size:18px;font-weight:900">—</div>
@@ -909,6 +910,27 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="energy-row"><div class="energy-label">🔌 Energi Charge</div><div class="energy-val" id="chargeLiveVal" style="font-size:12px;font-weight:500;color:var(--green)">— Wh</div></div>
       <div class="energy-row"><div class="energy-label">🌱 CO₂ Hemat</div><div class="energy-val" id="co2SaveVal" style="font-size:12px;font-weight:500;color:#00e676">—</div></div>
       <div class="energy-row"><div class="energy-label">💰 Biaya Listrik Trip</div><div class="energy-val" id="tripCostVal" style="font-size:12px;font-weight:700;color:#ffa726">—</div></div>
+    </div>
+  </div>
+
+
+  <!-- ── QUICK ACTIONS ── -->
+  <div class="home-quick-grid">
+    <div class="hq-btn" onclick="switchTab('navigasi',document.querySelectorAll('.tab')[2]);setTimeout(toggleChargingStations,300)">
+      <div class="hq-icon">🔌</div>
+      <div class="hq-text"><div class="hq-label">SPKLU</div><div class="hq-sub">Terdekat</div></div>
+    </div>
+    <div class="hq-btn" onclick="switchTab('navigasi',document.querySelectorAll('.tab')[2]);setTimeout(openTripPlanner,300)">
+      <div class="hq-icon">🧭</div>
+      <div class="hq-text"><div class="hq-label">Trip Planner</div><div class="hq-sub">Multi-tujuan</div></div>
+    </div>
+    <div class="hq-btn" onclick="switchTab('diagnosis',document.querySelectorAll('.tab')[1])">
+      <div class="hq-icon">🔧</div>
+      <div class="hq-text"><div class="hq-label">Diagnosis</div><div class="hq-sub">Status motor</div></div>
+    </div>
+    <div class="hq-btn" onclick="switchTab('stats',document.querySelectorAll('.tab')[4])">
+      <div class="hq-icon">📈</div>
+      <div class="hq-text"><div class="hq-label">Trip Stats</div><div class="hq-sub">Riwayat & grafik</div></div>
     </div>
   </div>
 
