@@ -802,6 +802,14 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .hq-label{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap}
 .hq-sub{font-size:10px;color:var(--muted)}
 
+/* ── SOC PROGRESS BAR ── */
+.home-soc-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin:4px 0 2px}
+.home-soc-bar-fill{height:100%;border-radius:4px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
+/* ── CHARGING ESTIMATE ── */
+.home-charge-est{display:none;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#00d4ff}
+.home-charge-est .blink{animation:chargePulse 1.4s ease-in-out infinite}
+@keyframes chargePulse{0%,100%{opacity:1}50%{opacity:.45}}
+
 </style>
 </head>
 <body>
@@ -859,6 +867,12 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="home-range-row">
         <span class="home-range-val" id="rangeVal" style="color:var(--green)">—</span>
         <span class="home-range-unit">km sisa</span>
+      </div>
+      <!-- SOC Progress Bar -->
+      <div class="home-soc-bar"><div id="socBarFill" class="home-soc-bar-fill" style="width:0%"></div></div>
+      <!-- Charging estimate (shown only when charging) -->
+      <div id="chargeEstRow" class="home-charge-est">
+        <span class="blink">⚡</span><span id="chargeEstText">Mengisi daya...</span>
       </div>
       <!-- Cuaca mood ringkas -->
       <div id="homeWeatherWidget" class="home-weather-mini" style="display:none">
@@ -3202,6 +3216,7 @@ function parseResponse(raw){
       renderBatteryIcon(num);
       updateBattPower();
       updateRangeEstimate();
+      updateChargingEstimate();
       // Notifikasi baterai rendah
       if(num < 15 && !lowBattNotified){
         notify('🔋 Baterai Rendah', `SOC tersisa ${num}% — segera cas baterai motor.`);
@@ -3293,7 +3308,7 @@ function parseResponse(raw){
           }
         }
       }
-      updateLivePowerSummary(); updateBattPower(); updateRangeEstimate();
+      updateLivePowerSummary(); updateBattPower(); updateRangeEstimate(); updateChargingEstimate();
       if(document.getElementById('screen-diagnosis').classList.contains('active')) drawChart();
       break;
     case 'CBAT':
@@ -3326,7 +3341,7 @@ function updateBattPower(){
 }
 
 // Render icon baterai vertikal: fill sesuai SOC, warna sesuai threshold
-function renderBatteryIcon(pct){
+function renderBatteryIcon(pct){ updateSocBar(pct);
   pct = Math.max(0, Math.min(100, pct));
   let color;
   if(pct < 20){ color='#ff1744'; }
@@ -7128,6 +7143,44 @@ playStationBell();
   if (document.readyState === 'complete') hideSplash();
   else window.addEventListener('load', hideSplash);
 })();
+// ── SOC PROGRESS BAR ──
+function updateSocBar(soc){
+  const fill = document.getElementById('socBarFill');
+  if(!fill) return;
+  const pct = Math.max(0, Math.min(100, soc));
+  fill.style.width = pct + '%';
+  const color = pct <= 15 ? '#ff4444'
+              : pct <= 30 ? '#ffaa00'
+              : pct <= 55 ? '#ffdd00'
+              : '#00e676';
+  fill.style.background = color;
+  // Pulse animasi kalau kritis
+  fill.style.boxShadow = pct <= 15 ? '0 0 6px #ff4444' : pct <= 30 ? '0 0 4px #ffaa00' : 'none';
+}
+
+// ── CHARGING TIME ESTIMATE ──
+function updateChargingEstimate(){
+  const el = document.getElementById('chargeEstRow');
+  const txt = document.getElementById('chargeEstText');
+  if(!el || !txt) return;
+  const isCharging = isConnected && motoData.spd <= 1 && motoData.ibat > 0 && motoData.vbat > 0;
+  if(!isCharging){ el.style.display = 'none'; return; }
+  const powerW   = motoData.vbat * motoData.ibat;
+  const socNow   = motoData.soc || 0;
+  const battWh   = BATTERY_NOMINAL_V * BATTERY_CAPACITY_AH;
+  const remainWh = (100 - socNow) / 100 * battWh;
+  if(powerW < 1){ el.style.display = 'none'; return; }
+  const hoursLeft = remainWh / powerW;
+  const totalMin  = Math.round(hoursLeft * 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  const timeStr = h > 0 ? `${h}j ${m}m` : `${m}m`;
+  txt.textContent = socNow >= 100
+    ? `Penuh ✓`
+    : `~${timeStr} lagi penuh · ${Math.round(powerW)}W`;
+  el.style.display = 'flex';
+}
+
 </script>
 </body>
 </html>
