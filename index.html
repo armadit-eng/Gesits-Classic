@@ -344,9 +344,11 @@ body.light .ble-log{box-shadow:none}
 .rb-body{flex:1;min-width:0;padding:11px 12px;display:flex;flex-direction:column;gap:3px;justify-content:center}
 .rb-instruction{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rb-instruction.rerouting{color:#ffa726;animation:pulse 1s infinite}
-.rb-meta-row{display:flex;gap:10px;align-items:center}
-.rb-eta{font-size:12px;font-weight:600;color:#00d4ff}
-.rb-dist-left{font-size:12px;color:var(--muted)}
+.rb-meta-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rb-eta{font-size:12px;font-weight:700;color:#00d4ff;min-width:48px}
+.rb-eta-sep{font-size:11px;color:var(--border)}
+.rb-arrival{font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
+.rb-dist-left{font-size:12px;color:var(--muted);margin-left:auto}
 .rb-stop{
   flex-shrink:0;background:rgba(255,61,61,0.15);border:none;
   border-left:1px solid rgba(255,61,61,.25);
@@ -1162,6 +1164,8 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="rb-instruction" id="rbInstruction">Memuat rute...</div>
       <div class="rb-meta-row">
         <span class="rb-eta" id="rbEta">— mnt</span>
+        <span class="rb-eta-sep">·</span>
+        <span class="rb-arrival" id="rbArrival">tiba —:—</span>
         <span class="rb-dist-left" id="rbDistLeft">— km tersisa</span>
       </div>
     </div>
@@ -4248,6 +4252,7 @@ function startNavigation(){
   const distEl=document.getElementById('rbArrowDist');
   if(distEl) distEl.textContent='—';
   fetchRoute(userLng,userLat,destLng,destLat,true);
+  startEtaTicker(); // mulai ETA real-time ticker 1 detik
   // Cuaca + elevasi tujuan — tampilkan versi ringkas di overlay (pakai data yang sudah ada, no extra request)
   updateOverlayWeatherElev();
   // Zoom ke posisi user saat mulai navigasi
@@ -4265,6 +4270,7 @@ function stopNavigation(){
   clearTimeout(rerouteCooldownTimer); rerouteCooldownTimer=null;
   clearTimeout(panResetTimer);
   clearInterval(snapInterval); snapInterval=null;
+  stopEtaTicker(); // hentikan ETA ticker
   document.getElementById('routeBar').style.display='none';
   document.getElementById('mapRecenterBtn').classList.remove('nav-active');
   document.getElementById('screen-navigasi').classList.remove('nav-clean');
@@ -4338,7 +4344,8 @@ function checkReroute(){
 async function triggerReroute(){
   rerouteInProgress = true;
   offRouteCount = 0;
-  nearestRouteIdx = 0; // reset supaya setelah reroute cek dari awal rute baru
+  nearestRouteIdx = 0;
+  lastRemM = null; // reset sisa jarak — akan diisi ulang setelah rute baru datang
   log('Off-route! Menghitung ulang rute...','sys');
 
   // UI: instruksi jadi "Rerouting..."
@@ -4362,7 +4369,76 @@ async function triggerReroute(){
   rerouteCooldownTimer = setTimeout(()=>{ rerouteCooldownTimer = null; }, REROUTE_COOLDOWN_MS);
   showToast('✅ Rute diperbarui');
 }
-// Peta modifier → polygon SVG panah modern (viewBox 44x44)
+// ── ETA REAL-TIME ──
+// Timer terpisah 1 detik — update ETA dan waktu tiba absolut
+// tanpa menunggu GPS update (yang bisa 1-5 detik sekali).
+let etaTicker = null;
+let lastRemM = null; // cache sisa jarak terakhir dari GPS update
+
+// Rolling speed average — lebih smooth dari kecepatan instan
+// Pakai 8 sampel terakhir (mirip speedHistory tapi khusus untuk ETA)
+const ETA_SPD_WINDOW = 8;
+const etaSpdBuf = new Array(ETA_SPD_WINDOW).fill(null);
+let etaSpdBufIdx = 0;
+
+function pushEtaSpeed(spd){
+  etaSpdBuf[etaSpdBufIdx % ETA_SPD_WINDOW] = spd;
+  etaSpdBufIdx++;
+}
+
+function getEtaSpeed(){
+  // Pakai rolling average dari sampel yang ada (abaikan null = belum ada data)
+  const valid = etaSpdBuf.filter(v => v !== null);
+  if(!valid.length) return 30; // default 30 km/h kalau belum ada data
+  const avg = valid.reduce((a,b)=>a+b,0) / valid.length;
+  // Kalau rata-rata < 3 km/h (macet/berhenti), pakai 15 km/h sebagai estimasi konservatif
+  // supaya ETA tidak lompat ke "∞" saat berhenti di lampu
+  return Math.max(avg, 5);
+}
+
+function updateEtaDisplay(){
+  if(!navActive || lastRemM === null) return;
+  const etaEl = document.getElementById('rbEta');
+  const arrEl = document.getElementById('rbArrival');
+  if(!etaEl || !arrEl) return;
+
+  const spdKmh = getEtaSpeed();
+  const remKm = lastRemM / 1000;
+  const etaMin = remKm / spdKmh * 60;
+
+  // Format menit — beda format untuk short vs long
+  let etaTxt;
+  if(etaMin < 1)       etaTxt = '< 1 mnt';
+  else if(etaMin < 60) etaTxt = Math.round(etaMin) + ' mnt';
+  else {
+    const h = Math.floor(etaMin/60);
+    const m = Math.round(etaMin%60);
+    etaTxt = h + 'j ' + (m>0 ? m+'m' : '');
+  }
+  etaEl.textContent = etaTxt;
+
+  // Waktu tiba absolut
+  const arrivalMs = Date.now() + etaMin * 60 * 1000;
+  const arr = new Date(arrivalMs);
+  const hh = arr.getHours().toString().padStart(2,'0');
+  const mm = arr.getMinutes().toString().padStart(2,'0');
+  arrEl.textContent = 'tiba ' + hh + ':' + mm;
+}
+
+function startEtaTicker(){
+  stopEtaTicker();
+  // Reset speed buffer saat navigasi baru dimulai
+  etaSpdBuf.fill(null); etaSpdBufIdx=0; lastRemM=null;
+  etaTicker = setInterval(()=>{
+    if(!navActive){ stopEtaTicker(); return; }
+    // Push kecepatan terkini ke buffer rolling
+    if(motoData.spd != null) pushEtaSpeed(motoData.spd);
+    updateEtaDisplay();
+  }, 1000);
+}
+function stopEtaTicker(){
+  if(etaTicker){ clearInterval(etaTicker); etaTicker=null; }
+}
 // Semua bentuk pakai style "navigation arrow" — kepala lebar, ekor concave notch
 const ARROW_SHAPES = {
   // Lurus ke atas — kepala segitiga lebar + notch di ekor
@@ -4442,14 +4518,13 @@ function updateRouteBarV2(distToNext, step){
   instr.textContent = action.charAt(0).toUpperCase() + action.slice(1);
   instr.classList.remove('rerouting');
 
-  // Sisa jarak & ETA dinamis
+  // Sisa jarak — simpan ke lastRemM untuk dipakai ETA ticker real-time
   const remM = calcRemainingDist();
   if(remM != null){
+    lastRemM = remM; // ETA ticker yang hitung dan update etaEl tiap detik
     distLeft.textContent = remM >= 1000 ? (remM/1000).toFixed(1)+' km tersisa' : Math.round(remM)+'m tersisa';
-    // ETA: estimasi dari kecepatan real-time (motoData.spd) atau 30 km/h default
-    const spdKmh = (motoData.spd > 3) ? motoData.spd : 30;
-    const etaMin = Math.round((remM/1000) / spdKmh * 60);
-    etaEl.textContent = etaMin < 1 ? '< 1 mnt' : etaMin + ' mnt';
+    // Update ETA sekali langsung (supaya tidak nunggu tick pertama)
+    updateEtaDisplay();
   }
 }
 
