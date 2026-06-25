@@ -860,6 +860,26 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .savings-pill-lbl{font-size:10px;color:var(--muted);font-weight:500}
 .savings-note{font-size:10px;color:var(--muted);text-align:center;margin-top:4px}
 
+/* ── VOICE READOUT ── */
+.voice-toggle{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--card2);color:var(--muted);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;margin-top:2px}
+.voice-toggle.on{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.4);color:#00d4ff}
+.voice-toggle .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .2s}
+.voice-toggle.on .dot{background:#00d4ff;animation:voicePulse 1.2s ease-in-out infinite}
+@keyframes voicePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* ── WEEKLY GOAL ── */
+.goal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:0 14px 10px;padding:13px 15px}
+.goal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.goal-title{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.goal-pct{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:800;color:var(--green)}
+.goal-bar{height:7px;background:var(--border);border-radius:7px;overflow:hidden;margin-bottom:7px}
+.goal-bar-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--teal),var(--green));transition:width .7s cubic-bezier(.4,0,.2,1)}
+.goal-bar-fill.done{background:linear-gradient(90deg,#00e676,#69f0ae)}
+.goal-footer{display:flex;justify-content:space-between;align-items:center}
+.goal-km{font-size:12px;color:var(--muted)}
+.goal-edit{font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;padding:3px 8px;border:1px solid var(--border);border-radius:8px;background:none;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.goal-edit:hover{color:var(--green);border-color:var(--green)}
+
 </style>
 </head>
 <body>
@@ -930,6 +950,10 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <span id="hwwMood">—</span>
       </div>
       <div id="hwwDetail" style="display:none"></div><!-- tetap ada untuk JS compatibility -->
+      <!-- Voice readout toggle -->
+      <div id="voiceToggleBtn" class="voice-toggle" onclick="toggleVoiceReadout()" title="Bacaan suara saat berkendara">
+        <span class="dot"></span><span id="voiceToggleTxt">SUARA OFF</span>
+      </div>
     </div>
   </div>
 
@@ -1523,7 +1547,20 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     </div>
   </div>
 
-  <!-- ── FUEL SAVINGS CARD ── -->
+  <!-- ── WEEKLY GOAL ── -->
+  <div class="goal-card" id="weeklyGoalCard">
+    <div class="goal-header">
+      <div class="goal-title">🎯 Target Mingguan<span id="goalDoneTag" style="display:none;font-size:10px;font-weight:700;color:#69f0ae;background:rgba(0,230,118,.12);padding:2px 8px;border-radius:20px">TERCAPAI ✓</span></div>
+      <div class="goal-pct" id="goalPct">0%</div>
+    </div>
+    <div class="goal-bar"><div class="goal-bar-fill" id="goalBarFill" style="width:0%"></div></div>
+    <div class="goal-footer">
+      <div class="goal-km"><span id="goalActual">0</span> / <span id="goalTarget">100</span> km minggu ini</div>
+      <button class="goal-edit" onclick="openGoalEdit()">✏️ Ubah Target</button>
+    </div>
+  </div>
+
+    <!-- ── FUEL SAVINGS CARD ── -->
   <div class="savings-card">
     <div class="savings-title">💰 Penghematan vs Motor Bensin</div>
     <div class="savings-main" id="savingsRp">Rp 0 <span>hemat</span></div>
@@ -1945,6 +1982,24 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <div class="uuid-field">
       <label>Interval Pergantian (detik)</label>
       <input id="inDashRotateSec" type="number" step="1" min="2" max="60" inputmode="numeric" placeholder="5">
+    </div>
+    <hr class="modal-sep">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎙️ Voice Readout</div>
+    <div class="uuid-field">
+      <label>Interval Bacaan (menit)</label>
+      <input id="inVoiceInterval" type="number" inputmode="numeric" min="1" max="60" placeholder="10" value="10">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceSpd" checked> Kecepatan</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceSoc" checked> SOC</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceRange" checked> Range</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceTrip"> Jarak Trip</label>
+    </div>
+    <hr class="modal-sep">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🔔 Idle Alert</div>
+    <div class="uuid-field">
+      <label>Alert setelah diam (menit, 0 = nonaktif)</label>
+      <input id="inIdleAlertMin" type="number" inputmode="numeric" min="0" max="60" placeholder="5" value="5">
     </div>
     <div class="modal-actions">
       <button class="modal-btn cancel" onclick="closeModal('settingsModal')">BATAL</button>
@@ -3443,7 +3498,7 @@ function parseResponse(raw){
           }
         }
       }
-      updateLivePowerSummary(); updateBattPower(); updateRangeEstimate(); updateChargingEstimate(); updateSmartAlert();
+      updateLivePowerSummary(); updateBattPower(); updateRangeEstimate(); updateChargingEstimate(); updateSmartAlert(); monitorIdleDrain();
       if(document.getElementById('screen-diagnosis').classList.contains('active')) drawChart();
       break;
     case 'CBAT':
@@ -5431,6 +5486,17 @@ function showToast(msg){
 // SETTINGS
 // ═══════════════════════════════════════════
 function openSettings(){
+  // Pre-fill voice settings
+  const vi = document.getElementById('inVoiceInterval');
+  if(vi) vi.value = localStorage.getItem('voice_interval_min')||'10';
+  const vItems = (localStorage.getItem('voice_items')||'speed,soc,range').split(',');
+  ['speed','soc','range','trip'].forEach(k=>{
+    const el = document.getElementById('voice'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el) el.checked = vItems.includes(k);
+  });
+  const ia = document.getElementById('inIdleAlertMin');
+  if(ia) ia.value = localStorage.getItem('idle_alert_min')||'5';
+
   document.getElementById('inMapboxToken').value=MAPBOX_TOKEN;
   document.getElementById('inMaptilerKey').value=MAPTILER_KEY;
   document.getElementById('inBattNomV').value=BATTERY_NOMINAL_V;
@@ -5498,6 +5564,18 @@ function pickProvider(p){
 }
 
 function saveSettings(){
+  // Voice readout settings
+  const vInt = parseFloat(document.getElementById('inVoiceInterval')?.value)||10;
+  localStorage.setItem('voice_interval_min', vInt);
+  const vItems = ['speed','soc','range','trip']
+    .filter(k=>document.getElementById('voice'+k.charAt(0).toUpperCase()+k.slice(1))?.checked);
+  localStorage.setItem('voice_items', vItems.join(','));
+  // Idle alert
+  const idleMin = parseFloat(document.getElementById('inIdleAlertMin')?.value)||0;
+  localStorage.setItem('idle_alert_min', idleMin);
+  // Reset idle state if changed
+  _idleAlertActive=false; _idleAlertFired=false; clearTimeout(_idleAlertTimer);
+
   const tok=document.getElementById('inMapboxToken').value.trim();
   const maptilerKey=document.getElementById('inMaptilerKey').value.trim();
   const nomV=parseFloat(document.getElementById('inBattNomV').value)||72;
@@ -6504,6 +6582,7 @@ window.addEventListener('orientationchange', ()=>setTimeout(applyLandscapeMode, 
 if(canInitMap()) setTimeout(initMap,500);
 loadSavedTheme();
 loadEnergyDetailPref();
+initVoiceReadout();
 
 // Migrasi 1x: data favorit lama (key 'gnav_favorites', dari bug duplikasi getFavorites)
 // digabung ke key aktif 'fav_destinations' supaya tidak hilang.
@@ -6719,6 +6798,7 @@ function renderStatsPage(){
   const sc = document.getElementById('statsHistCount');
   if(sc) sc.textContent = hist.length > 0 ? `${hist.length} trip tersimpan →` : 'Lihat semua trip →';
   renderFuelSavings();
+  renderWeeklyGoal();
   const totalKm = hist.reduce((s,t)=>s+(t.distance||0),0);
   const effs = hist.filter(t=>t.efficiency>0);
   const avgEff = effs.length ? effs.reduce((s,t)=>s+t.efficiency,0)/effs.length : 0;
@@ -7524,6 +7604,156 @@ function logServiceNow(){
   showToast('Servis berhasil dicatat!');
   renderMaintHistory(hist); updateMaintModalStatus(); updateMaintenanceCard();
 }
+// ════════════════════════════════════════
+// ── VOICE READOUT ──
+// ════════════════════════════════════════
+let _voiceTimer = null;
+let _voiceEnabled = localStorage.getItem('voice_enabled') === '1';
+
+function initVoiceReadout(){
+  updateVoiceToggleUI();
+  if(_voiceEnabled) scheduleVoice();
+}
+
+function updateVoiceToggleUI(){
+  const btn = document.getElementById('voiceToggleBtn');
+  const txt = document.getElementById('voiceToggleTxt');
+  if(!btn) return;
+  btn.className = 'voice-toggle' + (_voiceEnabled ? ' on' : '');
+  if(txt) txt.textContent = _voiceEnabled ? 'SUARA ON' : 'SUARA OFF';
+}
+
+function toggleVoiceReadout(){
+  if(!window.speechSynthesis){
+    showToast('Browser tidak mendukung Web Speech API');
+    return;
+  }
+  _voiceEnabled = !_voiceEnabled;
+  localStorage.setItem('voice_enabled', _voiceEnabled ? '1' : '0');
+  updateVoiceToggleUI();
+  if(_voiceEnabled){
+    scheduleVoice();
+    showToast('🎙️ Voice readout aktif');
+  } else {
+    clearTimeout(_voiceTimer);
+    _voiceTimer = null;
+    window.speechSynthesis.cancel();
+    showToast('🔇 Voice readout nonaktif');
+  }
+}
+
+function scheduleVoice(){
+  clearTimeout(_voiceTimer);
+  if(!_voiceEnabled) return;
+  const min = parseFloat(localStorage.getItem('voice_interval_min')) || 10;
+  _voiceTimer = setTimeout(()=>{ speakStatus(); scheduleVoice(); }, min * 60000);
+}
+
+function speakStatus(){
+  if(!_voiceEnabled || !isConnected || !window.speechSynthesis) return;
+  if((motoData.spd||0) < 3) return; // only when actually riding
+  window.speechSynthesis.cancel();
+  const items  = (localStorage.getItem('voice_items')||'speed,soc,range').split(',');
+  const parts  = [];
+  if(items.includes('speed') && motoData.spd!=null) parts.push(`Kecepatan ${motoData.spd} kilo per jam`);
+  if(items.includes('soc')   && motoData.soc!=null)  parts.push(`Baterai ${motoData.soc} persen`);
+  if(items.includes('range') && motoData.range!=null) parts.push(`Sisa jarak ${Math.round(motoData.range)} kilo`);
+  if(items.includes('trip')  && motoData.trip!=null)  parts.push(`Trip ${motoData.trip.toFixed(1)} kilo`);
+  if(!parts.length) return;
+  const utt  = new SpeechSynthesisUtterance(parts.join('. '));
+  utt.lang   = 'id-ID';
+  utt.rate   = 1.0;
+  utt.pitch  = 1.0;
+  utt.volume = 1.0;
+  window.speechSynthesis.speak(utt);
+}
+
+// ════════════════════════════════════════
+// ── IDLE DRAIN ALERT ──
+// ════════════════════════════════════════
+let _idleAlertTimer  = null;
+let _idleAlertFired  = false;
+let _idleAlertActive = false;
+
+function monitorIdleDrain(){
+  const minIdle = parseFloat(localStorage.getItem('idle_alert_min'));
+  if(!minIdle || minIdle <= 0) return; // feature disabled
+  const isIdle = isConnected
+    && (motoData.spd||0) <= 1
+    && (motoData.ibat||0) < -0.3
+    && (motoData.vbat||0) > 0;
+
+  if(isIdle && !_idleAlertActive){
+    _idleAlertActive = true;
+    _idleAlertFired  = false;
+    _idleAlertTimer  = setTimeout(()=>{
+      if(!_idleAlertFired && _idleAlertActive){
+        _idleAlertFired = true;
+        const pwr = Math.abs(Math.round((motoData.pbat)||(motoData.vbat * motoData.ibat)));
+        notify('⚡ Konsumsi Idle Terdeteksi',
+          `Motor diam ${minIdle} menit tapi mengonsumsi ~${pwr}W. Periksa apakah ada yang menyala.`);
+        if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+      }
+    }, minIdle * 60000);
+  } else if(!isIdle){
+    _idleAlertActive = false;
+    _idleAlertFired  = false;
+    clearTimeout(_idleAlertTimer);
+    _idleAlertTimer = null;
+  }
+}
+
+// ════════════════════════════════════════
+// ── WEEKLY GOAL ──
+// ════════════════════════════════════════
+function getWeekStart(){
+  const d = new Date();
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diff);
+  monday.setHours(0,0,0,0);
+  return monday;
+}
+
+function getWeeklyKm(){
+  const hist  = getTripHistory();
+  const start = getWeekStart();
+  return hist
+    .filter(t => new Date(t.date) >= start)
+    .reduce((s,t) => s + (t.distance||0), 0);
+}
+
+function renderWeeklyGoal(){
+  const goal    = parseFloat(localStorage.getItem('weekly_goal_km')) || 100;
+  const actual  = getWeeklyKm();
+  const pct     = Math.min(1, actual / goal);
+  const done    = actual >= goal;
+
+  const fillEl  = document.getElementById('goalBarFill');
+  const pctEl   = document.getElementById('goalPct');
+  const actEl   = document.getElementById('goalActual');
+  const tgtEl   = document.getElementById('goalTarget');
+  const tagEl   = document.getElementById('goalDoneTag');
+
+  if(fillEl) { fillEl.style.width = Math.round(pct*100)+'%'; fillEl.className = 'goal-bar-fill'+(done?' done':''); }
+  if(pctEl)  pctEl.textContent = Math.round(pct*100)+'%';
+  if(actEl)  actEl.textContent = actual.toFixed(1);
+  if(tgtEl)  tgtEl.textContent = goal;
+  if(tagEl)  tagEl.style.display = done ? '' : 'none';
+}
+
+function openGoalEdit(){
+  const cur = localStorage.getItem('weekly_goal_km') || '100';
+  const val = prompt('Target jarak mingguan (km):', cur);
+  if(val === null) return;
+  const n = parseFloat(val);
+  if(!n || n <= 0){ showToast('Target tidak valid'); return; }
+  localStorage.setItem('weekly_goal_km', n);
+  showToast(`🎯 Target diubah ke ${n} km/minggu`);
+  renderWeeklyGoal();
+}
+
 function renderMaintHistory(history){
   const el = document.getElementById('maintHistList');
   if(!el) return;
