@@ -115,19 +115,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .speedo-unit{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:1px}
 
 /* ── BATTERY VIEW ── */
-.batt-hero{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;margin:13px 14px 0;padding:16px 18px}
-.batt-hero-pct{font-family:'Rajdhani',sans-serif;font-size:56px;font-weight:800;color:var(--text);line-height:1;min-width:80px}
-.batt-hero-right{flex:1;display:flex;flex-direction:column;gap:6px}
-.batt-hero-sub{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
-.batt-hero-bar{height:6px;background:var(--border);border-radius:6px;overflow:hidden}
-.batt-hero-bar-fill{height:100%;border-radius:6px;background:var(--green);transition:width .6s ease}
-.batt-hero-meta{font-size:12px;color:var(--muted);font-weight:500}
-.batt-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 14px 14px}
-.batt-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:10px}
-.batt-icon{font-size:18px;flex-shrink:0}
-.batt-card-right{display:flex;flex-direction:column;gap:1px}
+/* ── BATTERY TAB ── */
+.batt-hero{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;margin:13px 14px 0;padding:14px 18px}
+.batt-hero-pct{font-family:'Rajdhani',sans-serif;font-size:52px;font-weight:800;color:var(--text);line-height:1;min-width:76px}
+.batt-hero-right{flex:1;display:flex;flex-direction:column;gap:5px}
+.batt-hero-sub{display:none}
+.batt-hero-bar-wrap{display:flex;align-items:center;gap:7px}
+.batt-hero-bar{flex:1;height:5px;background:var(--border);border-radius:5px;overflow:hidden}
+.batt-hero-bar-fill{height:100%;border-radius:5px;background:var(--green);transition:width .6s ease}
+.batt-hero-meta{font-size:11px;color:var(--muted);font-weight:600}
+/* 2-col metric grid */
+.batt-grid{background:var(--card);border:1px solid var(--border);border-radius:16px;margin:8px 14px 14px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.batt-card{display:flex;align-items:center;gap:12px;padding:14px 16px;position:relative}
+.batt-card::after{content:'';position:absolute;right:0;top:18%;bottom:18%;width:1px;background:var(--border)}
+.batt-card:nth-child(even)::after{display:none}
+.batt-card:nth-child(n+3){border-top:1px solid var(--border)}
+.batt-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.batt-card-right{display:flex;flex-direction:column;gap:1px;flex:1}
 .batt-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-.batt-val{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
+.batt-val{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;line-height:1.1;color:var(--text)}
 
 /* ── ENERGY / RANGE CARD ── */
 .energy-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 16px;margin:0 14px 12px}
@@ -1027,55 +1033,56 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <div class="batt-hero">
       <div class="batt-hero-pct" id="battHeroPct">—%</div>
       <div class="batt-hero-right">
-        <div class="batt-hero-sub">State of Charge</div>
-        <div class="batt-hero-bar">
-          <div class="batt-hero-bar-fill" id="battHeroBar" style="width:0%"></div>
+        <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">State of Charge</div>
+        <div class="batt-hero-bar-wrap">
+          <div class="batt-hero-bar"><div class="batt-hero-bar-fill" id="battHeroBar" style="width:0%"></div></div>
+          <div class="batt-hero-meta" id="battHeroLabel" style="white-space:nowrap;font-size:11px">SOH —%</div>
         </div>
-        <div class="batt-hero-meta" id="battHeroLabel">SOH: —%</div>
+        <div id="battChargeLine" style="display:none;font-size:11px;font-weight:600;color:#00d4ff">⚡ <span id="battChargeEst">Mengisi daya...</span></div>
       </div>
     </div>
-    <!-- Grid 3 kolom: data singkat -->
+    <!-- Grid 2 kolom: icon + metric -->
     <div class="batt-grid">
       <div class="batt-card">
-        <div class="batt-icon">⚡</div>
+        <div class="batt-icon" style="background:rgba(255,214,10,.13)">⚡</div>
         <div class="batt-card-right">
           <div class="batt-label">Voltase</div>
-          <div class="batt-val" id="vbatVal">— V</div>
+          <div class="batt-val" id="vbatVal">— <span style="font-size:13px;font-weight:500;color:var(--muted)">V</span></div>
         </div>
       </div>
       <div class="batt-card">
-        <div class="batt-icon">🔌</div>
+        <div class="batt-icon" style="background:rgba(76,201,240,.13)">🔌</div>
         <div class="batt-card-right">
           <div class="batt-label">Arus</div>
-          <div class="batt-val" id="ibatVal">— A</div>
+          <div class="batt-val" id="ibatVal">— <span style="font-size:13px;font-weight:500;color:var(--muted)">A</span></div>
         </div>
       </div>
       <div class="batt-card">
-        <div class="batt-icon">💡</div>
+        <div class="batt-icon" style="background:rgba(255,107,53,.13)">💡</div>
         <div class="batt-card-right">
           <div class="batt-label">Daya</div>
-          <div class="batt-val" id="pbatVal">— W</div>
+          <div class="batt-val" id="pbatVal">— <span style="font-size:13px;font-weight:500;color:var(--muted)">W</span></div>
         </div>
       </div>
       <div class="batt-card">
-        <div class="batt-icon">🌡️</div>
+        <div class="batt-icon" style="background:rgba(6,214,160,.13)">🌡️</div>
         <div class="batt-card-right">
           <div class="batt-label">Suhu</div>
-          <div class="batt-val" id="tbatValBatt">— °C</div>
+          <div class="batt-val" id="tbatValBatt">— <span style="font-size:13px;font-weight:500;color:var(--muted)">°C</span></div>
         </div>
       </div>
       <div class="batt-card">
-        <div class="batt-icon">🔄</div>
+        <div class="batt-icon" style="background:rgba(181,131,141,.13)">🔄</div>
         <div class="batt-card-right">
           <div class="batt-label">Siklus</div>
           <div class="batt-val" id="cbatVal">—</div>
         </div>
       </div>
       <div class="batt-card">
-        <div class="batt-icon">❤️</div>
+        <div class="batt-icon" style="background:rgba(0,230,118,.13)">❤️</div>
         <div class="batt-card-right">
           <div class="batt-label">SOH</div>
-          <div class="batt-val" id="sohValBatt">— %</div>
+          <div class="batt-val" id="sohValBatt">— <span style="font-size:13px;font-weight:500;color:var(--muted)">%</span></div>
         </div>
       </div>
     </div>
@@ -3244,7 +3251,7 @@ function parseResponse(raw){
       if(isNaN(num)) return; motoData.soh=num;
       document.getElementById('sohSub').textContent='SOH: '+num+'%';
       document.getElementById('sohVal2').textContent=num+' %';
-      document.getElementById('sohValBatt').textContent=num+' %';
+      document.getElementById('sohValBatt').innerHTML=num+' <span style="font-size:13px;font-weight:500;color:var(--muted)">%</span>';
       checkBmAlarms(motoData.soc, motoData.tbat, num); break;
     case 'TINV':
       if(isNaN(num)) return; motoData.tinv=num;
@@ -3256,13 +3263,13 @@ function parseResponse(raw){
     case 'TBAT':
       if(isNaN(num)) return; motoData.tbat=num;
       document.getElementById('tBatVal').textContent=num+' °C';
-      document.getElementById('tbatValBatt').textContent=num+' °C';
+      document.getElementById('tbatValBatt').innerHTML=num+' <span style="font-size:13px;font-weight:500;color:var(--muted)">°C</span>';
       checkTempAlert('Baterai', num, TEMP_WARN_TBAT, TEMP_CRIT_TBAT);
       checkBmAlarms(motoData.soc, num, motoData.soh);
       break;
     case 'VBAT':
       if(isNaN(num)) return; motoData.vbat=num;
-      document.getElementById('vbatVal').textContent=num+' V';
+      document.getElementById('vbatVal').innerHTML=num+' <span style="font-size:13px;font-weight:500;color:var(--muted)">V</span>';
       updateOverlay();
       updateBattPower();
       updateRangeEstimate();
@@ -3298,7 +3305,7 @@ function parseResponse(raw){
         lastEnergyTs = nowTs;
       }
       motoData.ibat = num;
-      document.getElementById('ibatVal').textContent=num+' A';
+      document.getElementById('ibatVal').innerHTML=num+' <span style="font-size:13px;font-weight:500;color:var(--muted)">A</span>';
       // Update power history untuk grafik
       if(motoData.vbat){
         const pw = motoData.vbat * num;
@@ -3351,7 +3358,7 @@ function parseResponse(raw){
 function updateBattPower(){
   if(motoData.vbat && motoData.ibat!==undefined){
     const p=(motoData.vbat*motoData.ibat).toFixed(0);
-    document.getElementById('pbatVal').textContent=p+' W';
+    document.getElementById('pbatVal').innerHTML=p+' <span style="font-size:13px;font-weight:500;color:var(--muted)">W</span>';
   }
 }
 
@@ -7178,25 +7185,33 @@ function updateSocBar(soc){
 
 // ── CHARGING TIME ESTIMATE ──
 function updateChargingEstimate(){
-  const el = document.getElementById('chargeEstRow');
+  const el  = document.getElementById('chargeEstRow');
   const txt = document.getElementById('chargeEstText');
-  if(!el || !txt) return;
+  const el2  = document.getElementById('battChargeLine');
+  const txt2 = document.getElementById('battChargeEst');
   const isCharging = isConnected && motoData.spd <= 1 && motoData.ibat > 0 && motoData.vbat > 0;
-  if(!isCharging){ el.style.display = 'none'; return; }
+  if(!isCharging){
+    if(el)  el.style.display  = 'none';
+    if(el2) el2.style.display = 'none';
+    return;
+  }
   const powerW   = motoData.vbat * motoData.ibat;
   const socNow   = motoData.soc || 0;
   const battWh   = BATTERY_NOMINAL_V * BATTERY_CAPACITY_AH;
   const remainWh = (100 - socNow) / 100 * battWh;
-  if(powerW < 1){ el.style.display = 'none'; return; }
+  if(powerW < 1){
+    if(el)  el.style.display  = 'none';
+    if(el2) el2.style.display = 'none';
+    return;
+  }
   const hoursLeft = remainWh / powerW;
   const totalMin  = Math.round(hoursLeft * 60);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   const timeStr = h > 0 ? `${h}j ${m}m` : `${m}m`;
-  txt.textContent = socNow >= 100
-    ? `Penuh ✓`
-    : `~${timeStr} lagi penuh · ${Math.round(powerW)}W`;
-  el.style.display = 'flex';
+  const msg = socNow >= 100 ? `Penuh ✓` : `~${timeStr} lagi penuh · ${Math.round(powerW)}W`;
+  if(el && txt){ txt.textContent = msg; el.style.display = 'flex'; }
+  if(el2 && txt2){ txt2.textContent = msg; el2.style.display = 'block'; }
 }
 
 // ── SMOOTH BEZIER (Catmull-Rom spline) ──
