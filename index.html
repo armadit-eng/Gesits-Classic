@@ -981,6 +981,15 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="energy-row"><div class="energy-label">🔌 Energi Charge</div><div class="energy-val" id="chargeLiveVal" style="font-size:12px;font-weight:500;color:var(--green)">— Wh</div></div>
       <div class="energy-row"><div class="energy-label">🌱 CO₂ Hemat</div><div class="energy-val" id="co2SaveVal" style="font-size:12px;font-weight:500;color:#00e676">—</div></div>
       <div class="energy-row"><div class="energy-label">💰 Biaya Listrik Trip</div><div class="energy-val" id="tripCostVal" style="font-size:12px;font-weight:700;color:#ffa726">—</div></div>
+      <div class="energy-row" style="flex-direction:column;align-items:stretch;gap:4px">
+        <div style="display:flex;justify-content:space-between">
+          <div class="energy-label">🔋 Delta SOC</div>
+          <div class="energy-val" id="socDeltaLiveVal" style="font-size:12px;font-weight:700;color:#ff9800">—</div>
+        </div>
+        <div style="height:3px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div id="socDeltaLiveBar" style="height:100%;width:0%;background:#ff9800;border-radius:3px;transition:width .5s ease"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3330,6 +3339,18 @@ function parseResponse(raw){
       updateRangeEstimate();
       updateChargingEstimate();
       updateSmartAlert();
+      // Live delta SOC
+      (()=>{
+        const el  = document.getElementById('socDeltaLiveVal');
+        const bar = document.getElementById('socDeltaLiveBar');
+        if(!el||tripStartSoc==null) return;
+        const delta = num - tripStartSoc;
+        const sign  = delta > 0 ? '+' : '';
+        const color = delta < -10 ? '#ff9800' : delta < 0 ? '#ffcc02' : '#00e676';
+        el.textContent  = `${tripStartSoc}% → ${num}% (${sign}${delta}%)`;
+        el.style.color  = color;
+        if(bar){ bar.style.width=Math.min(100,Math.abs(delta))+'%'; bar.style.background=color; }
+      })();
       // Notifikasi baterai rendah
       if(num < 15 && !lowBattNotified){
         notify('🔋 Baterai Rendah', `SOC tersisa ${num}% — segera cas baterai motor.`);
@@ -5849,6 +5870,23 @@ function renderTripHistory(){
         <div><span class="trip-item-lbl">Regen Maks</span>${t.maxRegenW?.toFixed(0)||'—'} W</div>
         <div><span class="trip-item-lbl">Daya Maks</span>${t.maxPowerW?.toFixed(0)||'—'} W</div>
         <div><span class="trip-item-lbl">Charge</span>${t.chargeWh?.toFixed(0)||'—'} Wh</div>
+        ${(()=>{
+          if(t.socStart==null||t.socEnd==null) return '';
+          const delta = t.socEnd - t.socStart;
+          const sign  = delta > 0 ? '+' : '';
+          const color = delta < -10 ? '#ff9800' : delta < 0 ? '#ffcc02' : '#00e676';
+          const bar   = Math.abs(delta);
+          const barColor = delta < 0 ? '#ff9800' : '#00e676';
+          return `<div style="grid-column:span 2;margin-top:2px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span class="trip-item-lbl">🔋 Delta SOC</span>
+              <span style="font-weight:700;color:${color}">${t.socStart}% → ${t.socEnd}% <span style="opacity:.8">(${sign}${delta}%)</span></span>
+            </div>
+            <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${Math.min(100,bar)}%;background:${barColor};border-radius:4px;transition:width .5s ease"></div>
+            </div>
+          </div>`;
+        })()}
         <div style="grid-column:span 2;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-top:2px">
           <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">💰 Biaya Listrik</span>
           <span style="font-size:16px;font-weight:800;color:#ffa726">${t.costIDR ? 'Rp '+Math.round(t.costIDR).toLocaleString('id-ID') : (t.energyWh>0 ? 'Rp '+Math.round((t.energyWh/1000)*1447).toLocaleString('id-ID') : '—')}</span>
