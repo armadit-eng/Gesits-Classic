@@ -880,6 +880,53 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .goal-edit{font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;padding:3px 8px;border:1px solid var(--border);border-radius:8px;background:none;font-family:inherit;-webkit-tap-highlight-color:transparent}
 .goal-edit:hover{color:var(--green);border-color:var(--green)}
 
+/* ── LAST PARKED CARD ── */
+.parked-card{display:none;margin:0 14px 10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;align-items:center;gap:12px}
+.parked-card.show{display:flex}
+.parked-icon{font-size:26px;flex-shrink:0}
+.parked-info{flex:1;min-width:0}
+.parked-title{font-size:12px;font-weight:700;color:var(--text)}
+.parked-sub{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.parked-btn{font-size:11px;font-weight:700;color:#000;background:var(--green);border:none;border-radius:9px;padding:7px 12px;cursor:pointer;font-family:inherit;white-space:nowrap;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+
+/* ── WAKELOCK INDICATOR ── */
+.wl-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ffdd00;margin-right:3px;vertical-align:middle;animation:wlPulse 2s ease-in-out infinite}
+@keyframes wlPulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── EFFICIENCY TREND ── */
+.eff-trend{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
+.eff-trend.up{background:rgba(0,230,118,.12);color:#00e676}
+.eff-trend.down{background:rgba(255,82,82,.1);color:#ff5252}
+.eff-trend.flat{background:rgba(255,255,255,.06);color:var(--muted)}
+
+/* ── RIDE LOCK ── */
+.ride-lock-fab{position:absolute;bottom:90px;right:14px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:500;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s}
+.ride-lock-fab:active{background:rgba(0,0,0,.8)}
+
+/* Fullscreen lock overlay */
+#rideLockOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:space-between;padding:48px 24px 52px;user-select:none;-webkit-user-select:none}
+#rideLockOverlay.active{display:flex}
+
+.rlo-top{display:flex;flex-direction:column;align-items:center;gap:4px}
+.rlo-time{font-family:'Rajdhani',sans-serif;font-size:64px;font-weight:700;color:#fff;line-height:1;letter-spacing:2px}
+.rlo-date{font-size:12px;color:rgba(255,255,255,.5);font-weight:500}
+
+.rlo-mid{display:flex;flex-direction:column;align-items:center;gap:16px}
+.rlo-speed{font-family:'Rajdhani',sans-serif;font-size:96px;font-weight:800;color:#fff;line-height:1}
+.rlo-speed-unit{font-size:18px;font-weight:500;color:rgba(255,255,255,.5);margin-top:-12px}
+.rlo-pills{display:flex;gap:12px}
+.rlo-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;color:rgba(255,255,255,.85)}
+
+.rlo-bottom{display:flex;flex-direction:column;align-items:center;gap:12px}
+.rlo-hint{font-size:12px;color:rgba(255,255,255,.35);letter-spacing:.3px}
+
+/* Hold-to-unlock button with SVG progress ring */
+.rlo-unlock-btn{position:relative;width:72px;height:72px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rlo-unlock-btn svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.rlo-unlock-btn circle.track{fill:none;stroke:rgba(255,255,255,.12);stroke-width:4}
+.rlo-unlock-btn circle.prog{fill:none;stroke:var(--green);stroke-width:4;stroke-linecap:round;stroke-dasharray:201;stroke-dashoffset:201;transition:stroke-dashoffset .05s linear}
+.rlo-unlock-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px}
+
 </style>
 </head>
 <body>
@@ -1049,6 +1096,16 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="maint-sub" id="maintRemaining">— km lagi</div>
     </div>
     <button class="maint-btn" onclick="openMaintenanceModal()">🔧 Buka Reminder Servis</button>
+  </div>
+
+    <!-- ── LAST PARKED LOCATION ── -->
+  <div id="parkedCard" class="parked-card">
+    <div class="parked-icon">🏍️</div>
+    <div class="parked-info">
+      <div class="parked-title">Motor Terakhir Diparkir</div>
+      <div class="parked-sub" id="parkedSub">Lokasi belum tersedia</div>
+    </div>
+    <button class="parked-btn" onclick="navigateToParked()">🗺️ Navigasi</button>
   </div>
 
     <!-- Install PWA (hidden until available) -->
@@ -1258,6 +1315,9 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       </div>
     </div>
   </div>
+
+  <!-- Ride Lock FAB -->
+  <div class="ride-lock-fab" id="rideLockFab" onclick="activateRideLock()" title="Kunci layar saat berkendara">🔒</div>
 
   <!-- Search bar -->
   <div class="nav-searchbar" id="navSearchBar">
@@ -1542,7 +1602,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     </div>
     <div class="stat-card gg">
       <div class="stat-label">Efisiensi Rata²</div>
-      <div class="stat-value" id="st-eff" style="font-size:20px">—</div>
+      <div class="stat-value" id="st-eff" style="font-size:20px">—<span id="effTrendBadge" class="eff-trend flat" style="display:none"></span></div>
       <div class="stat-sub">Wh/km</div>
     </div>
   </div>
@@ -2000,6 +2060,12 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <div class="uuid-field">
       <label>Alert setelah diam (menit, 0 = nonaktif)</label>
       <input id="inIdleAlertMin" type="number" inputmode="numeric" min="0" max="60" placeholder="5" value="5">
+    </div>
+    <hr class="modal-sep">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🔋 Charge Limit</div>
+    <div class="uuid-field">
+      <label>Stop charging alert di SOC (%, 100 = nonaktif)</label>
+      <input id="inChargeLimit" type="number" inputmode="numeric" min="50" max="100" placeholder="80" value="100">
     </div>
     <div class="modal-actions">
       <button class="modal-btn cancel" onclick="closeModal('settingsModal')">BATAL</button>
@@ -3345,7 +3411,7 @@ function parseResponse(raw){
   switch(key){
     case 'SPD':
       if(isNaN(num)) return;
-      motoData.spd=num; updateSpeedo(num);
+      motoData.spd=num; updateSpeedo(num); updateWakeLock();
       animSpdTo('overlaySpd', num);   // portrait nav speed overlay
       animSpdTo('hudSpd', num);       // landscape HUD
       animSpdTo('speedoVal', num);    // diagnosis speedometer
@@ -3394,6 +3460,7 @@ function parseResponse(raw){
       updateRangeEstimate();
       updateChargingEstimate();
       updateSmartAlert();
+      checkChargeLimit(num);
       // Live delta SOC
       (()=>{
         const el  = document.getElementById('socDeltaLiveVal');
@@ -3650,6 +3717,9 @@ function restartDashRotation(){ if(isConnected) startDashRotation(); }
 function onDisconnected(){
   isConnected=false; serialWriter=null; serialPort=null; stopPolling(); setBtState('disconnected');
   log('Koneksi terputus.','err');
+  releaseWakeLock();
+  if((motoData.trip||0) > 0.1) saveParkedLocation();
+  updateParkedCard();
 }
 
 // ── AUTO-RECONNECT ──
@@ -5496,6 +5566,8 @@ function openSettings(){
   });
   const ia = document.getElementById('inIdleAlertMin');
   if(ia) ia.value = localStorage.getItem('idle_alert_min')||'5';
+  const cl2 = document.getElementById('inChargeLimit');
+  if(cl2) cl2.value = localStorage.getItem('charge_limit_pct')||'100';
 
   document.getElementById('inMapboxToken').value=MAPBOX_TOKEN;
   document.getElementById('inMaptilerKey').value=MAPTILER_KEY;
@@ -5573,6 +5645,8 @@ function saveSettings(){
   // Idle alert
   const idleMin = parseFloat(document.getElementById('inIdleAlertMin')?.value)||0;
   localStorage.setItem('idle_alert_min', idleMin);
+  const cl = parseFloat(document.getElementById('inChargeLimit')?.value)||100;
+  localStorage.setItem('charge_limit_pct', cl);
   // Reset idle state if changed
   _idleAlertActive=false; _idleAlertFired=false; clearTimeout(_idleAlertTimer);
 
@@ -6583,6 +6657,7 @@ if(canInitMap()) setTimeout(initMap,500);
 loadSavedTheme();
 loadEnergyDetailPref();
 initVoiceReadout();
+updateParkedCard();
 
 // Migrasi 1x: data favorit lama (key 'gnav_favorites', dari bug duplikasi getFavorites)
 // digabung ke key aktif 'fav_destinations' supaya tidak hilang.
@@ -6799,6 +6874,7 @@ function renderStatsPage(){
   if(sc) sc.textContent = hist.length > 0 ? `${hist.length} trip tersimpan →` : 'Lihat semua trip →';
   renderFuelSavings();
   renderWeeklyGoal();
+  renderEfficiencyTrend();
   const totalKm = hist.reduce((s,t)=>s+(t.distance||0),0);
   const effs = hist.filter(t=>t.efficiency>0);
   const avgEff = effs.length ? effs.reduce((s,t)=>s+t.efficiency,0)/effs.length : 0;
@@ -7754,6 +7830,214 @@ function openGoalEdit(){
   renderWeeklyGoal();
 }
 
+// ════════════════════════════════════════
+// ── WAKELOCK ──
+// ════════════════════════════════════════
+let _wakeLock = null;
+
+async function acquireWakeLock(){
+  if(!('wakeLock' in navigator)) return;
+  if(_wakeLock) return;
+  try{
+    _wakeLock = await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release', ()=>{ _wakeLock=null; });
+  } catch(e){ /* not critical */ }
+}
+
+async function releaseWakeLock(){
+  if(!_wakeLock) return;
+  try{ await _wakeLock.release(); } catch(e){}
+  _wakeLock = null;
+}
+
+// Re-acquire after tab becomes visible again
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && isConnected && (motoData.spd||0) > 0){
+    acquireWakeLock();
+  }
+});
+
+function updateWakeLock(){
+  if(isConnected && (motoData.spd||0) > 1) acquireWakeLock();
+  else releaseWakeLock();
+}
+
+// ════════════════════════════════════════
+// ── LAST PARKED LOCATION ──
+// ════════════════════════════════════════
+const PARKED_KEY = 'last_parked';
+
+function saveParkedLocation(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const data = {
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      ts : Date.now(),
+      trip: motoData.trip || 0,
+      odo : motoData.odo  || 0
+    };
+    localStorage.setItem(PARKED_KEY, JSON.stringify(data));
+    updateParkedCard();
+  }, ()=>{}, { enableHighAccuracy:true, timeout:8000 });
+}
+
+function updateParkedCard(){
+  const raw  = localStorage.getItem(PARKED_KEY);
+  const card = document.getElementById('parkedCard');
+  const sub  = document.getElementById('parkedSub');
+  if(!card) return;
+  if(!raw){ card.classList.remove('show'); return; }
+  const d = JSON.parse(raw);
+  const ago = Math.round((Date.now()-d.ts)/60000);
+  const agoStr = ago < 60 ? `${ago} mnt lalu` : `${Math.floor(ago/60)}j ${ago%60}m lalu`;
+  sub.textContent = `${d.lat.toFixed(5)}, ${d.lng.toFixed(5)} · ${agoStr}`;
+  card.classList.add('show');
+}
+
+function navigateToParked(){
+  const raw = localStorage.getItem(PARKED_KEY);
+  if(!raw){ showToast('Lokasi parkir belum tersimpan'); return; }
+  const { lat, lng } = JSON.parse(raw);
+  // Open in Mapbox nav tab
+  if(typeof setDestination === 'function'){
+    switchTab('navigasi', document.querySelectorAll('.tab')[2]);
+    setTimeout(()=> setDestination(lng, lat, 'Motor Saya 🏍️'), 400);
+  } else {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+  }
+}
+
+// ════════════════════════════════════════
+// ── CHARGE LIMIT ALERT ──
+// ════════════════════════════════════════
+let _chargeLimitFired = false;
+
+function checkChargeLimit(soc){
+  const limit = parseFloat(localStorage.getItem('charge_limit_pct')) || 100;
+  if(limit >= 100) return;
+  const isCharging = isConnected && (motoData.spd||0) <= 1 && (motoData.ibat||0) > 0;
+  if(!isCharging){ _chargeLimitFired = false; return; }
+  if(soc >= limit && !_chargeLimitFired){
+    _chargeLimitFired = true;
+    notify('🔋 Batas Charge Tercapai', `SOC sudah ${soc}% — segera cabut charger untuk menjaga kesehatan baterai.`);
+    if(navigator.vibrate) navigator.vibrate([500,200,500]);
+    showToast(`🔋 SOC ${soc}% — cabut charger!`);
+  }
+  if(soc < limit - 5) _chargeLimitFired = false; // reset kalau SOC turun lagi (new charge session)
+}
+
+// ════════════════════════════════════════
+// ── EFFICIENCY TREND ──
+// ════════════════════════════════════════
+function renderEfficiencyTrend(){
+  const hist = getTripHistory().filter(t => t.efficiency && t.efficiency > 0);
+  const badge = document.getElementById('effTrendBadge');
+  if(!badge || hist.length < 4) return;
+
+  const recent = hist.slice(0, Math.min(5, Math.floor(hist.length/2)));
+  const older  = hist.slice(recent.length, recent.length * 2);
+  if(!older.length) return;
+
+  const avgRecent = recent.reduce((s,t)=>s+t.efficiency,0) / recent.length;
+  const avgOlder  = older.reduce((s,t)=>s+t.efficiency,0)  / older.length;
+  // Lower Wh/km = more efficient
+  const delta = ((avgOlder - avgRecent) / avgOlder) * 100; // positive = more efficient recently
+
+  badge.style.display = '';
+  if(Math.abs(delta) < 2){ badge.className='eff-trend flat'; badge.textContent='→ stabil'; }
+  else if(delta > 0)     { badge.className='eff-trend up';   badge.textContent=`↑ ${delta.toFixed(0)}%`; }
+  else                   { badge.className='eff-trend down';  badge.textContent=`↓ ${Math.abs(delta).toFixed(0)}%`; }
+}
+
+// ════════════════════════════════════════
+// ── RIDE LOCK ──
+// ════════════════════════════════════════
+let _lockClockTimer  = null;
+let _unlockHoldTimer = null;
+let _unlockInterval  = null;
+let _lockActive      = false;
+
+function activateRideLock(){
+  _lockActive = true;
+  acquireWakeLock();
+  document.getElementById('rideLockOverlay').classList.add('active');
+  updateLockClock();
+  updateLockData();
+  _lockClockTimer = setInterval(()=>{ updateLockClock(); updateLockData(); }, 1000);
+  // Reset progress ring
+  const prog = document.getElementById('rloProgCircle');
+  if(prog) prog.style.strokeDashoffset = '201';
+}
+
+function deactivateRideLock(){
+  _lockActive = false;
+  document.getElementById('rideLockOverlay').classList.remove('active');
+  clearInterval(_lockClockTimer);
+  clearInterval(_unlockInterval);
+  clearTimeout(_unlockHoldTimer);
+  _lockClockTimer = null;
+}
+
+function updateLockClock(){
+  const now  = new Date();
+  const hh   = String(now.getHours()).padStart(2,'0');
+  const mm   = String(now.getMinutes()).padStart(2,'0');
+  const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const el = document.getElementById('rloTime');
+  const de = document.getElementById('rloDate');
+  if(el) el.textContent = `${hh}:${mm}`;
+  if(de) de.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+}
+
+function updateLockData(){
+  const sEl = document.getElementById('rloSpd');
+  const bEl = document.getElementById('rloBatt');
+  const rEl = document.getElementById('rloRange');
+  if(sEl) sEl.textContent = motoData.spd ?? 0;
+  if(bEl) bEl.textContent = motoData.soc  ?? '—';
+  if(rEl) rEl.textContent = motoData.range != null ? Math.round(motoData.range) : '—';
+  // Speed color
+  if(sEl && motoData.spd != null){
+    sEl.style.color = motoData.spd > 80 ? '#ff5252' : motoData.spd > 60 ? '#ffaa00' : '#fff';
+  }
+}
+
+// Hold-to-unlock: 2-second hold with progress ring animation
+let _holdProgress = 0;
+const HOLD_DURATION = 2000; // ms
+const HOLD_STEPS    = 40;   // update tiap 50ms
+
+function startUnlockHold(){
+  _holdProgress = 0;
+  const prog = document.getElementById('rloProgCircle');
+  const step = HOLD_DURATION / HOLD_STEPS;
+
+  _unlockInterval = setInterval(()=>{
+    _holdProgress += step;
+    const pct = Math.min(1, _holdProgress / HOLD_DURATION);
+    if(prog) prog.style.strokeDashoffset = String(201 - 201 * pct);
+    if(pct >= 1){
+      clearInterval(_unlockInterval);
+      deactivateRideLock();
+      if(navigator.vibrate) navigator.vibrate(100);
+    }
+  }, step);
+}
+
+function cancelUnlockHold(){
+  clearInterval(_unlockInterval);
+  _holdProgress = 0;
+  const prog = document.getElementById('rloProgCircle');
+  // Animate back to empty
+  if(prog){
+    prog.style.transition = 'stroke-dashoffset .3s ease';
+    prog.style.strokeDashoffset = '201';
+    setTimeout(()=>{ prog.style.transition = 'stroke-dashoffset .05s linear'; }, 350);
+  }
+}
+
 function renderMaintHistory(history){
   const el = document.getElementById('maintHistList');
   if(!el) return;
@@ -7816,6 +8100,39 @@ function renderFuelSavings(){
     <hr class="modal-sep">
     <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Riwayat Servis</div>
     <div id="maintHistList"><div style="font-size:12px;color:var(--muted);padding:8px 0">Belum ada catatan servis.</div></div>
+  </div>
+</div>
+
+<!-- ══ RIDE LOCK OVERLAY ══ -->
+<div id="rideLockOverlay">
+  <!-- TOP: jam -->
+  <div class="rlo-top">
+    <div class="rlo-time" id="rloTime">00:00</div>
+    <div class="rlo-date" id="rloDate">—</div>
+  </div>
+
+  <!-- MID: speed + pills -->
+  <div class="rlo-mid">
+    <div>
+      <div class="rlo-speed" id="rloSpd">0</div>
+      <div class="rlo-speed-unit">km/h</div>
+    </div>
+    <div class="rlo-pills">
+      <div class="rlo-pill">🔋 <span id="rloBatt">—</span>%</div>
+      <div class="rlo-pill">📍 <span id="rloRange">—</span> km</div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: hold-to-unlock -->
+  <div class="rlo-bottom">
+    <div class="rlo-hint">Tekan &amp; tahan untuk membuka</div>
+    <div class="rlo-unlock-btn" id="rloUnlockBtn"
+         onmousedown="startUnlockHold()" ontouchstart="startUnlockHold()"
+         onmouseup="cancelUnlockHold()" ontouchend="cancelUnlockHold()"
+         onmouseleave="cancelUnlockHold()">
+      <svg viewBox="0 0 72 72"><circle class="track" cx="36" cy="36" r="32"/><circle class="prog" id="rloProgCircle" cx="36" cy="36" r="32"/></svg>
+      <div class="rlo-unlock-icon">🔓</div>
+    </div>
   </div>
 </div>
 
