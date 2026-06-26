@@ -633,11 +633,22 @@ body.landscape-mode #screen-navigasi {
   position:fixed!important;
   inset:0!important;
   z-index:1!important;
+  flex-direction:column!important;
 }
 body.landscape-mode #mapContainer {
-  flex:1!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  z-index:0!important;
+}
+body.landscape-mode #mapContainer .mapboxgl-map,
+body.landscape-mode #mapContainer .mapboxgl-canvas-container,
+body.landscape-mode #mapContainer canvas.mapboxgl-canvas {
   width:100%!important;
   height:100%!important;
+  position:absolute!important;
+  inset:0!important;
 }
 body.landscape-mode .nav-searchbar,
 body.landscape-mode #navQuickBtns,
@@ -2453,59 +2464,70 @@ function updateDashOverlay(){
 }
 
 let lastActiveTab = 'home';
-let _wasLandscape = null; // track state sebelumnya supaya tidak re-run kalau tidak perlu
+let _wasLandscape = null;
 
 function applyLandscapeMode(){
   const isLandscape = window.innerWidth > window.innerHeight;
-  // Hanya jalankan kalau orientasi benar-benar berubah
   if(_wasLandscape === isLandscape) return;
   _wasLandscape = isLandscape;
 
   document.body.classList.toggle('landscape-mode', isLandscape);
 
   if(isLandscape){
-    // Simpan tab aktif sebelum masuk landscape (jangan simpan 'navigasi')
+    // Simpan tab aktif sebelum masuk landscape
     const currentActive = document.querySelector('.screen.active');
     if(currentActive && currentActive.id !== 'screen-navigasi'){
       lastActiveTab = currentActive.id.replace('screen-','');
     }
-    // Paksa screen-navigasi aktif (CSS landscape-mode sudah hide semua .screen
-    // tapi show #screen-navigasi via !important, namun kita tetap set .active
-    // supaya logika JS lain yang cek .active tetap konsisten)
+    // Paksa screen-navigasi aktif
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-navigasi')?.classList.add('active');
-    // Hapus nav-fullscreen kalau ada (landscape punya CSS sendiri)
     document.body.classList.remove('nav-fullscreen');
 
-    // Init atau resize peta
+    // Init peta kalau belum, atau resize agresif kalau sudah
     if(canInitMap() && !mapInitialized){
-      setTimeout(initMap, 350);
+      setTimeout(initMap, 100);
     } else if(mapInstance){
-      setTimeout(()=>{ mapInstance.resize(); }, 250);
+      // rAF chain: tunggu browser selesai paint CSS baru, baru resize
+      const doResize = ()=>{
+        requestAnimationFrame(()=>{
+          if(mapInstance){
+            mapInstance.resize();
+            // Trigger re-render paksa
+            requestAnimationFrame(()=>{
+              if(mapInstance) mapInstance.resize();
+            });
+          }
+        });
+      };
+      doResize();
+      setTimeout(doResize, 100);
+      setTimeout(doResize, 400);
     }
-    // Start clock ticker
+
+    // HUD clock
     updateHudClock();
     if(!hudClockTimer) hudClockTimer = setInterval(updateHudClock, 30000);
-    updateDashOverlay();
+    setTimeout(updateDashOverlay, 100);
+
   } else {
-    // Portrait: kembalikan tab sebelumnya (default 'home' kalau belum ada)
+    // Portrait: kembalikan tab sebelumnya
     const restoreTab = (lastActiveTab && lastActiveTab !== 'navigasi') ? lastActiveTab : 'home';
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-'+restoreTab)?.classList.add('active');
-    // Restore tab highlight
     document.querySelectorAll('.tab').forEach(t=>{
       const m = t.getAttribute('onclick')?.match(/'(\w+)'/);
       if(m) t.classList.toggle('active', m[1] === restoreTab);
     });
-    // Nav-fullscreen: aktifkan kalau restore ke navigasi
     const isNavFull = restoreTab === 'navigasi';
     document.body.classList.toggle('nav-fullscreen', isNavFull);
     const backBtn = document.getElementById('navBackBtn');
     if(backBtn) backBtn.style.display = isNavFull ? 'flex' : 'none';
 
-    // Resize peta supaya tidak blank
-    if(mapInstance) setTimeout(()=>mapInstance.resize(), 250);
-    // Stop clock ticker
+    if(mapInstance){
+      setTimeout(()=>mapInstance.resize(), 100);
+      setTimeout(()=>mapInstance.resize(), 400);
+    }
     if(hudClockTimer){ clearInterval(hudClockTimer); hudClockTimer = null; }
   }
 }
@@ -4187,7 +4209,12 @@ function initMap(){
     const ro = new ResizeObserver(()=>{ if(mapInstance) mapInstance.resize(); });
     ro.observe(document.getElementById('mapContainer'));
   }
-  mapInstance.once('load', ()=>mapInstance.resize());
+  mapInstance.once('load', ()=>{
+    mapInstance.resize();
+    // Extra resize untuk landscape mode yang mungkin sudah aktif saat load
+    setTimeout(()=>mapInstance.resize(), 100);
+    setTimeout(()=>mapInstance.resize(), 500);
+  });
 
   // User marker — custom photo (popup pin) or default arrow
   const arrowEl = buildUserMarkerEl();
