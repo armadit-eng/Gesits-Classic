@@ -1349,6 +1349,12 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <div class="hud-bottom-label">SOH</div>
         <div class="hud-bottom-val" id="hudSoh">—</div>
       </div>
+      <!-- Tombol keluar landscape — pointer-events auto karena butuh interaksi -->
+      <div style="pointer-events:auto;margin-left:auto">
+        <button onclick="exitLandscapeMode()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.7);font-size:10px;padding:4px 8px;cursor:pointer;font-family:inherit;line-height:1.3">
+          ✕ Portrait
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1543,6 +1549,11 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <button class="nav-ctrl-btn" id="btNavBtn" onclick="onBtClick()">
       <span class="nb-icon" id="btNavDot">○</span>
       <span class="nb-label" id="btNavLabel">Motor</span>
+    </button>
+    <!-- Tombol manual landscape (portrait only) -->
+    <button class="nav-ctrl-btn" id="navLandscapeBtn" onclick="forceLandscapeMode()" title="Paksa mode landscape">
+      <span class="nb-icon">⤢</span>
+      <span class="nb-label">Landscape</span>
     </button>
     <!-- Mode peta + aksi -->
     <div class="nav-mode-btns">
@@ -2466,8 +2477,21 @@ function updateDashOverlay(){
 let lastActiveTab = 'home';
 let _wasLandscape = null;
 
+function isDeviceLandscape(){
+  // Cara paling reliable di Android: screen.orientation
+  if(screen.orientation && screen.orientation.type){
+    return screen.orientation.type.includes('landscape');
+  }
+  // Fallback: window.orientation (deprecated tapi masih luas)
+  if(typeof window.orientation === 'number'){
+    return Math.abs(window.orientation) === 90;
+  }
+  // Fallback akhir: dimensi window
+  return window.innerWidth > window.innerHeight;
+}
+
 function applyLandscapeMode(){
-  const isLandscape = window.innerWidth > window.innerHeight;
+  const isLandscape = isDeviceLandscape();
   if(_wasLandscape === isLandscape) return;
   _wasLandscape = isLandscape;
 
@@ -2488,21 +2512,17 @@ function applyLandscapeMode(){
     if(canInitMap() && !mapInitialized){
       setTimeout(initMap, 100);
     } else if(mapInstance){
-      // rAF chain: tunggu browser selesai paint CSS baru, baru resize
       const doResize = ()=>{
         requestAnimationFrame(()=>{
           if(mapInstance){
             mapInstance.resize();
-            // Trigger re-render paksa
-            requestAnimationFrame(()=>{
-              if(mapInstance) mapInstance.resize();
-            });
+            requestAnimationFrame(()=>{ if(mapInstance) mapInstance.resize(); });
           }
         });
       };
       doResize();
-      setTimeout(doResize, 100);
-      setTimeout(doResize, 400);
+      setTimeout(doResize, 150);
+      setTimeout(doResize, 500);
     }
 
     // HUD clock
@@ -2531,9 +2551,52 @@ function applyLandscapeMode(){
     if(hudClockTimer){ clearInterval(hudClockTimer); hudClockTimer = null; }
   }
 }
-// ============================================================
-// RIDING SCORE
-// ============================================================
+// Paksa masuk landscape mode secara manual (override deteksi orientasi)
+// Berguna kalau auto-detect tidak bekerja di browser tertentu
+let _forcedLandscape = false;
+function forceLandscapeMode(){
+  _forcedLandscape = true;
+  _wasLandscape = null; // reset guard
+  // Override isDeviceLandscape sementara
+  document.body.classList.add('landscape-mode');
+  document.body.classList.remove('nav-fullscreen');
+
+  const currentActive = document.querySelector('.screen.active');
+  if(currentActive && currentActive.id !== 'screen-navigasi'){
+    lastActiveTab = currentActive.id.replace('screen-','');
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-navigasi')?.classList.add('active');
+
+  if(canInitMap() && !mapInitialized){
+    setTimeout(initMap, 100);
+  } else if(mapInstance){
+    requestAnimationFrame(()=>{
+      mapInstance.resize();
+      requestAnimationFrame(()=>{ mapInstance.resize(); });
+    });
+    setTimeout(()=>mapInstance.resize(), 300);
+    setTimeout(()=>mapInstance.resize(), 700);
+  }
+  updateHudClock();
+  if(!hudClockTimer) hudClockTimer = setInterval(updateHudClock, 30000);
+  setTimeout(updateDashOverlay, 100);
+}
+
+function exitLandscapeMode(){
+  _forcedLandscape = false;
+  _wasLandscape = null;
+  document.body.classList.remove('landscape-mode');
+  const restoreTab = (lastActiveTab && lastActiveTab !== 'navigasi') ? lastActiveTab : 'home';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+restoreTab)?.classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>{
+    const m = t.getAttribute('onclick')?.match(/'(\w+)'/);
+    if(m) t.classList.toggle('active', m[1] === restoreTab);
+  });
+  if(hudClockTimer){ clearInterval(hudClockTimer); hudClockTimer = null; }
+  if(mapInstance) setTimeout(()=>mapInstance.resize(), 200);
+}
 function updateRidingScore(){
   if(!isConnected || motoData.spd===undefined) return;
   const spd = motoData.spd;
@@ -6778,14 +6841,23 @@ window.addEventListener('resize',drawChart);
 let _orientDebounce = null;
 function onOrientationChange(){
   clearTimeout(_orientDebounce);
-  _orientDebounce = setTimeout(()=>{
-    // Reset state supaya applyLandscapeMode selalu re-evaluate setelah orientasi berubah
-    _wasLandscape = null;
-    applyLandscapeMode();
-  }, 200);
+  // Reset _wasLandscape supaya applyLandscapeMode selalu re-evaluate
+  _wasLandscape = null;
+  _orientDebounce = setTimeout(applyLandscapeMode, 250);
 }
-window.addEventListener('resize', onOrientationChange);
-window.addEventListener('orientationchange', ()=>{ _wasLandscape = null; setTimeout(applyLandscapeMode, 300); });
+
+// screen.orientation adalah API paling reliable di Android modern
+if(screen.orientation){
+  screen.orientation.addEventListener('change', onOrientationChange);
+}
+// Fallback: window orientationchange (iOS/lama)
+window.addEventListener('orientationchange', onOrientationChange);
+// Fallback terakhir: resize (untuk browser desktop/emulator)
+window.addEventListener('resize', ()=>{
+  clearTimeout(_orientDebounce);
+  _wasLandscape = null;
+  _orientDebounce = setTimeout(applyLandscapeMode, 300);
+});
 
 if(canInitMap()) setTimeout(initMap,500);
 loadSavedTheme();
