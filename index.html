@@ -2088,6 +2088,26 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 </div>
 
 <script>
+// Failsafe: paksa splash hilang setelah 5 detik walau JS lain error
+(function(){
+  var _splashShownAt = Date.now();
+  function _forceSplash(){
+    var el = document.getElementById('splashScreen');
+    if(el){ el.classList.add('hide'); setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 700); }
+  }
+  // Hard timeout 5 detik
+  setTimeout(_forceSplash, 5000);
+  // Juga coba saat DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', function(){
+    var wait = Math.max(0, 2700 - (Date.now() - _splashShownAt));
+    setTimeout(_forceSplash, wait);
+  });
+  window._splashShownAt = _splashShownAt;
+  window._forceSplash = _forceSplash;
+})();
+</script>
+
+<script>
 // ═══════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════
@@ -6693,10 +6713,10 @@ function tpStartFirstLeg(){
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-updateTripVal();
-updateSpdSub();
-renderErrorList();
-setTimeout(drawChart,100);
+try{ updateTripVal(); }catch(e){ console.warn('updateTripVal error:', e); }
+try{ updateSpdSub(); }catch(e){ console.warn('updateSpdSub error:', e); }
+try{ renderErrorList(); }catch(e){ console.warn('renderErrorList error:', e); }
+setTimeout(function(){ try{ drawChart(); }catch(e){} }, 100);
 window.addEventListener('resize',drawChart);
 window.addEventListener('resize', applyLandscapeMode);
 window.addEventListener('orientationchange', ()=>setTimeout(applyLandscapeMode, 150));
@@ -7480,19 +7500,16 @@ function playStationBell(){
 playStationBell();
 
 (function(){
-  const MIN_SHOW_MS = 2700; // disesuaikan dgn durasi bel stasiun 8 nada (~2.7s)
-  const shownAt = Date.now();
-  function hideSplash(){
-    const el = document.getElementById('splashScreen');
-    if (!el) return;
-    const wait = Math.max(0, MIN_SHOW_MS - (Date.now() - shownAt));
-    setTimeout(() => {
-      el.classList.add('hide');
-      setTimeout(() => el.remove(), 600);
-    }, wait);
+  // hideSplash dipanggil saat semua JS sudah dimuat
+  // Failsafe sudah ada di atas (5 detik hard timeout)
+  if(window._forceSplash){
+    const wait = Math.max(0, 2700 - (Date.now() - (window._splashShownAt||Date.now())));
+    if(document.readyState === 'complete'){
+      setTimeout(window._forceSplash, wait);
+    } else {
+      window.addEventListener('load', function(){ setTimeout(window._forceSplash, wait); });
+    }
   }
-  if (document.readyState === 'complete') hideSplash();
-  else window.addEventListener('load', hideSplash);
 })();
 
 function updateSocBar(soc){
