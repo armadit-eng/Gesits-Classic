@@ -620,11 +620,25 @@ body.light .ble-log{box-shadow:none}
 ═══════════════════════════════════════════ */
 body.landscape-mode {
   max-width:100vw!important;
+  width:100vw!important;
 }
 body.landscape-mode .topbar,
 body.landscape-mode .tabs { display:none!important; }
 body.landscape-mode .screen { display:none!important; }
-body.landscape-mode #screen-navigasi { display:flex!important; height:100dvh!important; }
+body.landscape-mode #screen-navigasi {
+  display:flex!important;
+  height:100dvh!important;
+  width:100vw!important;
+  max-width:100vw!important;
+  position:fixed!important;
+  inset:0!important;
+  z-index:1!important;
+}
+body.landscape-mode #mapContainer {
+  flex:1!important;
+  width:100%!important;
+  height:100%!important;
+}
 body.landscape-mode .nav-searchbar,
 body.landscape-mode #navQuickBtns,
 body.landscape-mode .nav-bottom-bar,
@@ -634,6 +648,11 @@ body.landscape-mode #spdOverlay,
 body.landscape-mode .route-bar,
 body.landscape-mode #mapAttribution { display:none!important; }
 body.landscape-mode #dashHUD { display:flex!important; }
+/* Tombol peta tetap kelihatan di landscape */
+body.landscape-mode .map-zoom-ctrl,
+body.landscape-mode .map-recenter-btn,
+body.landscape-mode .map-preview-btn,
+body.landscape-mode .ride-lock-fab { display:flex!important; }
 
 /* Portrait + tab Navigasi aktif: header & tab hilang, peta full */
 body.nav-fullscreen .topbar,
@@ -2433,48 +2452,63 @@ function updateDashOverlay(){
   }
 }
 
+let lastActiveTab = 'home';
+let _wasLandscape = null; // track state sebelumnya supaya tidak re-run kalau tidak perlu
+
 function applyLandscapeMode(){
   const isLandscape = window.innerWidth > window.innerHeight;
+  // Hanya jalankan kalau orientasi benar-benar berubah
+  if(_wasLandscape === isLandscape) return;
+  _wasLandscape = isLandscape;
+
   document.body.classList.toggle('landscape-mode', isLandscape);
+
   if(isLandscape){
-    // Simpan tab aktif sebelum masuk landscape
+    // Simpan tab aktif sebelum masuk landscape (jangan simpan 'navigasi')
     const currentActive = document.querySelector('.screen.active');
     if(currentActive && currentActive.id !== 'screen-navigasi'){
       lastActiveTab = currentActive.id.replace('screen-','');
     }
-    // Aktifkan tab navigasi supaya peta kelihatan (wajib untuk landscape HUD)
+    // Paksa screen-navigasi aktif (CSS landscape-mode sudah hide semua .screen
+    // tapi show #screen-navigasi via !important, namun kita tetap set .active
+    // supaya logika JS lain yang cek .active tetap konsisten)
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-navigasi')?.classList.add('active');
-    // Update tab highlight (meski tab bar disembunyikan di landscape)
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    // Hapus nav-fullscreen kalau ada (landscape punya CSS sendiri)
+    document.body.classList.remove('nav-fullscreen');
+
     // Init atau resize peta
-    if(canInitMap()&&!mapInitialized) setTimeout(initMap,300);
-    else if(mapInstance) setTimeout(()=>{ mapInstance.resize(); }, 200);
+    if(canInitMap() && !mapInitialized){
+      setTimeout(initMap, 350);
+    } else if(mapInstance){
+      setTimeout(()=>{ mapInstance.resize(); }, 250);
+    }
     // Start clock ticker
     updateHudClock();
     if(!hudClockTimer) hudClockTimer = setInterval(updateHudClock, 30000);
     updateDashOverlay();
   } else {
-    // Portrait: kembalikan tab sebelumnya
-    const restoreTab = (lastActiveTab && lastActiveTab !== 'navigasi') ? lastActiveTab : null;
-    if(restoreTab){
-      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-      document.getElementById('screen-'+restoreTab)?.classList.add('active');
-      // Restore tab highlight
-      document.querySelectorAll('.tab').forEach(t=>{
-        const name = t.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
-        if(name===restoreTab) t.classList.add('active');
-        else t.classList.remove('active');
-      });
-    }
-    // Resize peta supaya tidak blank saat kembali portrait
-    if(mapInstance) setTimeout(()=>mapInstance.resize(), 200);
-    // Stop clock ticker — tidak perlu saat portrait
-    if(hudClockTimer){ clearInterval(hudClockTimer); hudClockTimer=null; }
+    // Portrait: kembalikan tab sebelumnya (default 'home' kalau belum ada)
+    const restoreTab = (lastActiveTab && lastActiveTab !== 'navigasi') ? lastActiveTab : 'home';
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-'+restoreTab)?.classList.add('active');
+    // Restore tab highlight
+    document.querySelectorAll('.tab').forEach(t=>{
+      const m = t.getAttribute('onclick')?.match(/'(\w+)'/);
+      if(m) t.classList.toggle('active', m[1] === restoreTab);
+    });
+    // Nav-fullscreen: aktifkan kalau restore ke navigasi
+    const isNavFull = restoreTab === 'navigasi';
+    document.body.classList.toggle('nav-fullscreen', isNavFull);
+    const backBtn = document.getElementById('navBackBtn');
+    if(backBtn) backBtn.style.display = isNavFull ? 'flex' : 'none';
+
+    // Resize peta supaya tidak blank
+    if(mapInstance) setTimeout(()=>mapInstance.resize(), 250);
+    // Stop clock ticker
+    if(hudClockTimer){ clearInterval(hudClockTimer); hudClockTimer = null; }
   }
 }
-
-let lastActiveTab = 'home';
 // ============================================================
 // RIDING SCORE
 // ============================================================
@@ -5783,7 +5817,10 @@ function saveSettings(){
 // TABS & MODAL
 // ═══════════════════════════════════════════
 function switchTab(name,el){
-  lastActiveTab = name;
+  // Jangan simpan 'navigasi' sebagai lastActiveTab kalau nanti perlu restore
+  if(!document.body.classList.contains('landscape-mode')){
+    lastActiveTab = name;
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
@@ -5797,9 +5834,6 @@ function switchTab(name,el){
   if(name==='home') fetchHomeWeather();
   if(name==='navigasi'){
     if(canInitMap()&&!mapInitialized) setTimeout(initMap,300);
-    // Container baru saja jadi visible (display:flex) — Mapbox perlu di-resize
-    // ulang karena saat initMap() pertama kali jalan di background (sebelum tab
-    // ini aktif), container masih display:none sehingga ukurannya salah/0.
     else if(mapInstance) setTimeout(()=>mapInstance.resize(),50);
   }
   if(name==='stats') renderStatsPage();
@@ -6712,8 +6746,20 @@ updateSpdSub();
 renderErrorList();
 setTimeout(drawChart,100);
 window.addEventListener('resize',drawChart);
-window.addEventListener('resize', applyLandscapeMode);
-window.addEventListener('orientationchange', ()=>setTimeout(applyLandscapeMode, 150));
+
+// Gunakan debounce supaya tidak spam saat resize
+let _orientDebounce = null;
+function onOrientationChange(){
+  clearTimeout(_orientDebounce);
+  _orientDebounce = setTimeout(()=>{
+    // Reset state supaya applyLandscapeMode selalu re-evaluate setelah orientasi berubah
+    _wasLandscape = null;
+    applyLandscapeMode();
+  }, 200);
+}
+window.addEventListener('resize', onOrientationChange);
+window.addEventListener('orientationchange', ()=>{ _wasLandscape = null; setTimeout(applyLandscapeMode, 300); });
+
 if(canInitMap()) setTimeout(initMap,500);
 loadSavedTheme();
 loadEnergyDetailPref();
