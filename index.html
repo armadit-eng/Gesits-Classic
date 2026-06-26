@@ -726,11 +726,12 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 
 /* ── BOTTOM BAR ── */
 .hud-bottom {
-  display:flex; align-items:center; justify-content:space-around;
+  display:flex; align-items:center;
   padding:6px 14px 10px;
+  position:relative;
   background:linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 85%, transparent 100%);
 }
-.hud-bottom-item { display:flex; flex-direction:column; align-items:center; gap:1px; }
+.hud-bottom-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; }
 .hud-bottom-label {
   font-size:9px; font-weight:700; color:rgba(255,255,255,.65);
   text-transform:uppercase; letter-spacing:.8px;
@@ -740,8 +741,10 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
   font-family:'Rajdhani',sans-serif; font-size:17px;
   font-weight:700; color:#fff; line-height:1;
   text-shadow:0 1px 6px rgba(0,0,0,.9);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
 }
-.hud-bottom-div { width:1px; height:28px; background:rgba(255,255,255,.15); }
+.hud-bottom-div { width:1px; height:28px; background:rgba(255,255,255,.15); flex-shrink:0; }
+.hud-exit-btn { position:absolute; right:14px; bottom:10px; pointer-events:auto; }
 
 /* ── SPEED ROLLING ANIMATION ── */
 /* Container untuk efek gulir odometer */
@@ -834,6 +837,15 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 /* Maintenance modal extras */
 .maint-hist-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
 .maint-hist-item:last-child{border-bottom:none}
+
+/* ── HOME QUICK ACTIONS GRID ── */
+.home-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 10px}
+.hq-btn{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}
+.hq-btn:active{background:var(--card2)}
+.hq-icon{font-size:22px;flex-shrink:0}
+.hq-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.hq-label{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-sub{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── FUEL SAVINGS CARD ── */
 .savings-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:0 14px 14px;padding:14px 16px}
@@ -1306,7 +1318,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <div class="hud-bottom-val" id="hudSoh">—</div>
       </div>
       <!-- Tombol keluar landscape — pointer-events auto karena butuh interaksi -->
-      <div style="pointer-events:auto;margin-left:auto">
+      <div class="hud-exit-btn">
         <button onclick="exitLandscapeMode()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.7);font-size:10px;padding:4px 8px;cursor:pointer;font-family:inherit;line-height:1.3">
           ✕ Portrait
         </button>
@@ -1507,11 +1519,6 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <span class="nb-label" id="btNavLabel">Motor</span>
     </button>
     <!-- Manual landscape toggle -->
-    <button class="nav-ctrl-btn" onclick="forceLandscapeMode()" title="Paksa mode landscape">
-      <span class="nb-icon">⤢</span>
-      <span class="nb-label">Landscape</span>
-    </button>
-    <!-- Tombol manual landscape (portrait only) -->
     <button class="nav-ctrl-btn" id="navLandscapeBtn" onclick="forceLandscapeMode()" title="Paksa mode landscape">
       <span class="nb-icon">⤢</span>
       <span class="nb-label">Landscape</span>
