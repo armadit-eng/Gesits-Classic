@@ -259,7 +259,7 @@ body.light .ble-log{box-shadow:none}
 
 /* Recenter */
 .map-recenter-btn{
-  position:absolute;right:10px;bottom:80px;z-index:10;
+  position:absolute;right:10px;bottom:56px;z-index:20;
   background:rgba(13,17,23,0.9);border:1px solid var(--border);
   border-radius:10px;width:40px;height:40px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
@@ -267,7 +267,7 @@ body.light .ble-log{box-shadow:none}
   transition:background .15s, bottom .2s;
 }
 .map-recenter-btn:hover{background:var(--card2)}
-.map-recenter-btn.nav-active{bottom:160px}
+.map-recenter-btn.nav-active{bottom:132px}
 
 /* Destination panel */
 .dest-panel{
@@ -899,9 +899,15 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .eff-trend.down{background:rgba(255,82,82,.1);color:#ff5252}
 .eff-trend.flat{background:rgba(255,255,255,.06);color:var(--muted)}
 
-/* ── RIDE LOCK ── */
-.ride-lock-fab{position:absolute;bottom:90px;right:14px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:500;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s}
+/* ── RIDE LOCK + MAP ACTION BUTTONS ── */
+.ride-lock-fab{position:absolute;bottom:148px;right:10px;width:40px;height:40px;border-radius:10px;background:rgba(13,17,23,0.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:20;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
 .ride-lock-fab:active{background:rgba(0,0,0,.8)}
+.ride-lock-fab.nav-active{bottom:228px}
+
+/* Preview rute (zoom out seluruh rute) */
+.map-preview-btn{position:absolute;right:10px;bottom:100px;z-index:20;background:rgba(13,17,23,0.9);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:background .15s;font-size:16px}
+.map-preview-btn:hover{background:var(--card2)}
+.map-preview-btn.nav-active{bottom:180px}
 
 /* Fullscreen lock overlay */
 #rideLockOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:space-between;padding:48px 24px 52px;user-select:none;-webkit-user-select:none}
@@ -1428,6 +1434,11 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
   <!-- Recenter -->
   <button class="map-recenter-btn" id="mapRecenterBtn" style="display:none" onclick="recenterMap()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+  </button>
+
+  <!-- Preview rute (zoom out tampilkan seluruh rute) -->
+  <button class="map-preview-btn" id="mapPreviewBtn" style="display:none" onclick="previewFullRoute()" title="Tampilkan seluruh rute">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
   </button>
 
   <!-- Preview panel (setelah pilih tujuan) -->
@@ -2426,25 +2437,38 @@ function applyLandscapeMode(){
   const isLandscape = window.innerWidth > window.innerHeight;
   document.body.classList.toggle('landscape-mode', isLandscape);
   if(isLandscape){
-    // Aktifkan tab navigasi supaya peta kelihatan
-    const navScreen = document.getElementById('screen-navigasi');
-    if(!navScreen?.classList.contains('active')){
-      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-      navScreen?.classList.add('active');
+    // Simpan tab aktif sebelum masuk landscape
+    const currentActive = document.querySelector('.screen.active');
+    if(currentActive && currentActive.id !== 'screen-navigasi'){
+      lastActiveTab = currentActive.id.replace('screen-','');
     }
+    // Aktifkan tab navigasi supaya peta kelihatan (wajib untuk landscape HUD)
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-navigasi')?.classList.add('active');
+    // Update tab highlight (meski tab bar disembunyikan di landscape)
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     // Init atau resize peta
     if(canInitMap()&&!mapInitialized) setTimeout(initMap,300);
-    else if(mapInstance) setTimeout(()=>mapInstance.resize(),100);
+    else if(mapInstance) setTimeout(()=>{ mapInstance.resize(); }, 200);
     // Start clock ticker
     updateHudClock();
     if(!hudClockTimer) hudClockTimer = setInterval(updateHudClock, 30000);
     updateDashOverlay();
   } else {
     // Portrait: kembalikan tab sebelumnya
-    if(lastActiveTab && lastActiveTab !== 'navigasi'){
+    const restoreTab = (lastActiveTab && lastActiveTab !== 'navigasi') ? lastActiveTab : null;
+    if(restoreTab){
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-      document.getElementById('screen-'+lastActiveTab)?.classList.add('active');
+      document.getElementById('screen-'+restoreTab)?.classList.add('active');
+      // Restore tab highlight
+      document.querySelectorAll('.tab').forEach(t=>{
+        const name = t.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+        if(name===restoreTab) t.classList.add('active');
+        else t.classList.remove('active');
+      });
     }
+    // Resize peta supaya tidak blank saat kembali portrait
+    if(mapInstance) setTimeout(()=>mapInstance.resize(), 200);
     // Stop clock ticker — tidak perlu saat portrait
     if(hudClockTimer){ clearInterval(hudClockTimer); hudClockTimer=null; }
   }
@@ -4108,6 +4132,7 @@ function initMap(){
   document.getElementById('mapPlaceholder').style.display='none';
   document.getElementById('mapZoomCtrl').style.display='flex';
   document.getElementById('mapRecenterBtn').style.display='flex';
+  document.getElementById('mapPreviewBtn').style.display='flex';
   mapboxgl.accessToken=MAPBOX_TOKEN||'no-token-needed-for-osm';
 
   mapInstance=new mapboxgl.Map({
@@ -4224,6 +4249,38 @@ function recenterMap(){
     mapInstance.easeTo({center:[userLng,userLat],zoom:17,bearing:userHeading,pitch:45,duration:600});
   } else {
     mapInstance.easeTo({center:[userLng,userLat],zoom:16,bearing:0,pitch:0,duration:600});
+  }
+}
+
+// Zoom out untuk tampilkan seluruh rute (bisa dipakai meski navigasi sedang aktif)
+function previewFullRoute(){
+  if(!mapInstance) return;
+  // Jika ada rute aktif, fit ke bounds rute tersebut
+  try{
+    const src = mapInstance.getSource('route');
+    if(src){
+      const data = src._data || (src.serialize && src.serialize().data);
+      let coords = null;
+      if(data && data.geometry && data.geometry.coordinates){
+        coords = data.geometry.coordinates;
+      } else if(data && data.features && data.features[0]){
+        coords = data.features[0].geometry.coordinates;
+      }
+      if(coords && coords.length > 0){
+        const lngs = coords.map(c=>c[0]);
+        const lats = coords.map(c=>c[1]);
+        const bounds = [
+          [Math.min(...lngs)-0.005, Math.min(...lats)-0.005],
+          [Math.max(...lngs)+0.005, Math.max(...lats)+0.005]
+        ];
+        mapInstance.fitBounds(bounds,{padding:52,pitch:0,bearing:0,duration:800,maxZoom:16});
+        return;
+      }
+    }
+  }catch(e){}
+  // Fallback: zoom out ke posisi user dengan pitch=0
+  if(userLng!=null){
+    mapInstance.easeTo({center:[userLng,userLat],zoom:13,pitch:0,bearing:0,duration:700});
   }
 }
 
@@ -4800,6 +4857,8 @@ function startNavigation(){
   document.getElementById('destPanel').style.display='none';
   document.getElementById('routeBar').style.display='flex';
   document.getElementById('mapRecenterBtn').classList.add('nav-active');
+  document.getElementById('mapPreviewBtn').classList.add('nav-active');
+  document.getElementById('rideLockFab').classList.add('nav-active');
   // Halaman navigasi bersih: search bar & tombol favorit/simpan/trip planner
   // gak relevan lagi pas lagi jalan, jadi disembunyikan biar peta lega
   document.getElementById('screen-navigasi').classList.add('nav-clean');
@@ -4832,6 +4891,8 @@ function stopNavigation(){
   stopEtaTicker(); // hentikan ETA ticker
   document.getElementById('routeBar').style.display='none';
   document.getElementById('mapRecenterBtn').classList.remove('nav-active');
+  document.getElementById('mapPreviewBtn').classList.remove('nav-active');
+  document.getElementById('rideLockFab').classList.remove('nav-active');
   document.getElementById('screen-navigasi').classList.remove('nav-clean');
   document.getElementById('navSearchBar').style.display='';
   document.getElementById('navQuickBtns').style.display='flex';
