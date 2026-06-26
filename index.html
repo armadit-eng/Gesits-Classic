@@ -48,10 +48,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 
 /* ── HOME ── */
 /* ── HOME REDESIGN: hero + status bar ── */
-.home-hero{display:flex;gap:0;margin:10px 14px 8px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);height:120px}
-.home-hero-moto{width:130px;flex-shrink:0;background:linear-gradient(135deg,#12182a 0%,#0d1117 100%);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.home-hero{display:flex;gap:0;margin:10px 14px 8px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);min-height:120px}
+.home-hero-moto{width:130px;flex-shrink:0;background:linear-gradient(135deg,#12182a 0%,#0d1117 100%);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;align-self:stretch}
 .home-hero-moto::before{content:'';position:absolute;width:160px;height:160px;background:radial-gradient(circle,var(--garasi-glow,rgba(0,230,118,.1)) 0%,transparent 70%);border-radius:50%}
-.home-hero-right{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.home-hero-right{flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
 .home-soc-row{display:flex;align-items:baseline;gap:6px}
 .home-soc-val{font-family:'Rajdhani',sans-serif;font-size:38px;font-weight:800;line-height:1;color:var(--text)}
 .home-soc-sub{font-size:11px;color:var(--muted);font-weight:600}
@@ -251,7 +251,7 @@ body.light .ble-log{box-shadow:none}
 
 /* Recenter */
 .map-recenter-btn{
-  position:absolute;right:10px;bottom:80px;z-index:10;
+  position:absolute;right:10px;bottom:66px;z-index:10;
   background:rgba(13,17,23,0.9);border:1px solid var(--border);
   border-radius:10px;width:40px;height:40px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
@@ -259,7 +259,7 @@ body.light .ble-log{box-shadow:none}
   transition:background .15s, bottom .2s;
 }
 .map-recenter-btn:hover{background:var(--card2)}
-.map-recenter-btn.nav-active{bottom:160px}
+.map-recenter-btn.nav-active{bottom:150px}
 
 /* Destination panel */
 .dest-panel{
@@ -631,6 +631,10 @@ body.landscape-mode .map-zoom-ctrl,
 body.landscape-mode .map-recenter-btn,
 body.landscape-mode .map-preview-btn,
 body.landscape-mode .ride-lock-fab { display:flex!important; }
+/* Landscape: nav-bar hilang, FAB turun ke bawah layar langsung */
+body.landscape-mode .map-recenter-btn { bottom:10px; }
+body.landscape-mode .map-preview-btn  { bottom:60px; }
+body.landscape-mode .ride-lock-fab    { bottom:110px; }
 
 /* Portrait + tab Navigasi aktif: header & tab hilang, peta full */
 body.nav-fullscreen .topbar,
@@ -744,7 +748,6 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
 }
 .hud-bottom-div { width:1px; height:28px; background:rgba(255,255,255,.15); flex-shrink:0; }
-.hud-exit-btn { position:absolute; right:14px; bottom:10px; pointer-events:auto; }
 
 /* ── SPEED ROLLING ANIMATION ── */
 /* Container untuk efek gulir odometer */
@@ -899,14 +902,14 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .eff-trend.flat{background:rgba(255,255,255,.06);color:var(--muted)}
 
 /* ── RIDE LOCK + MAP ACTION BUTTONS ── */
-.ride-lock-fab{position:absolute;bottom:148px;right:10px;width:40px;height:40px;border-radius:10px;background:rgba(13,17,23,0.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:20;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.ride-lock-fab{position:absolute;bottom:166px;right:10px;width:40px;height:40px;border-radius:10px;background:rgba(13,17,23,0.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:20;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s,bottom .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
 .ride-lock-fab:active{background:rgba(0,0,0,.8)}
-.ride-lock-fab.nav-active{bottom:228px}
+.ride-lock-fab.nav-active{bottom:250px}
 
 /* Preview rute (zoom out seluruh rute) */
-.map-preview-btn{position:absolute;right:10px;bottom:100px;z-index:20;background:rgba(13,17,23,0.9);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:background .15s;font-size:16px}
+.map-preview-btn{position:absolute;right:10px;bottom:116px;z-index:20;background:rgba(13,17,23,0.9);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:background .15s,bottom .2s;font-size:16px}
 .map-preview-btn:hover{background:var(--card2)}
-.map-preview-btn.nav-active{bottom:180px}
+.map-preview-btn.nav-active{bottom:200px}
 
 /* Fullscreen lock overlay */
 #rideLockOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:space-between;padding:48px 24px 52px;user-select:none;-webkit-user-select:none}
@@ -1317,12 +1320,6 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <div class="hud-bottom-label">SOH</div>
         <div class="hud-bottom-val" id="hudSoh">—</div>
       </div>
-      <!-- Tombol keluar landscape — pointer-events auto karena butuh interaksi -->
-      <div class="hud-exit-btn">
-        <button onclick="exitLandscapeMode()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.7);font-size:10px;padding:4px 8px;cursor:pointer;font-family:inherit;line-height:1.3">
-          ✕ Portrait
-        </button>
-      </div>
     </div>
   </div>
 
@@ -1517,11 +1514,6 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <button class="nav-ctrl-btn" id="btNavBtn" onclick="onBtClick()">
       <span class="nb-icon" id="btNavDot">○</span>
       <span class="nb-label" id="btNavLabel">Motor</span>
-    </button>
-    <!-- Manual landscape toggle -->
-    <button class="nav-ctrl-btn" id="navLandscapeBtn" onclick="forceLandscapeMode()" title="Paksa mode landscape">
-      <span class="nb-icon">⤢</span>
-      <span class="nb-label">Landscape</span>
     </button>
     <!-- Mode peta + aksi -->
     <div class="nav-mode-btns">
