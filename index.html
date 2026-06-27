@@ -14,8 +14,29 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GESITS">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script>
+  // Alias mapboxgl → maplibregl
+  // Guard: kalau maplibregl belum load (offline/lambat), buat dummy agar tidak error
+  if(typeof maplibregl !== 'undefined'){
+    var mapboxgl = maplibregl;
+  } else {
+    // Dummy — map tidak akan render tapi app tidak crash
+    var mapboxgl = {
+      Map: function(){ return {on:function(){},once:function(){},resize:function(){},
+        addSource:function(){},addLayer:function(){},getSource:function(){return null;},
+        setStyle:function(){},flyTo:function(){},fitBounds:function(){},
+        getZoom:function(){return 15;},setZoom:function(){},
+        getCenter:function(){return {lng:106.8,lat:-6.2};},remove:function(){}};},
+      Marker: function(){ return {setLngLat:function(){return this;},addTo:function(){return this;},
+        remove:function(){},setRotation:function(){return this;},getElement:function(){return document.createElement('div');}};},
+      LngLatBounds: function(a,b){ return {extend:function(){return this;}};},
+      accessToken: ''
+    };
+    console.warn('MapLibre belum load — peta tidak tersedia offline');
+  }
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -37,7 +58,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .bt-btn.connected{color:var(--green);border-color:var(--green)}
 
 /* ── TABS ── */
-.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px)}
 .tab{flex:1;text-align:center;padding:10px 0 9px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
 .tab.active{color:var(--green);border-bottom-color:var(--green)}
 
@@ -58,7 +79,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .home-range-row{display:flex;align-items:baseline;gap:4px}
 .home-range-val{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--green)}
 .home-range-unit{font-size:11px;color:var(--muted);font-weight:500}
-.home-weather-mini{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text);font-weight:500;overflow:hidden;white-space:nowrap}
+.home-weather-mini{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text);font-weight:500;overflow:hidden;white-space:normal;flex-wrap:wrap}
 .home-weather-mini span:first-child{font-size:14px;flex-shrink:0}
 /* Status bar compact */
 .home-status-bar{display:flex;align-items:center;margin:0 14px 8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px 12px}
@@ -230,7 +251,16 @@ body.light .ble-log{box-shadow:none}
 
 /* Map container */
 #mapContainer{flex:1;position:relative;min-height:0}
-#mapContainer .mapboxgl-map{width:100%;height:100%}
+#mapContainer .mapboxgl-map,
+#mapContainer .maplibregl-map{width:100%;height:100%}
+/* Paksa canvas MapLibre visible di Android WebView */
+#mapContainer canvas{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  position:absolute!important;
+  top:0;left:0;
+}
 .mapboxgl-ctrl-bottom-left,.mapboxgl-ctrl-bottom-right,.mapboxgl-ctrl-top-left,.mapboxgl-ctrl-top-right{display:none!important}
 
 /* Zoom controls */
@@ -259,7 +289,7 @@ body.light .ble-log{box-shadow:none}
   transition:background .15s, bottom .2s;
 }
 .map-recenter-btn:hover{background:var(--card2)}
-.map-recenter-btn.nav-active{bottom:150px}
+.map-recenter-btn.nav-active{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 
 /* Destination panel */
 .dest-panel{
@@ -340,7 +370,9 @@ body.light .ble-log{box-shadow:none}
 
 /* Route bar (navigasi aktif) */
 .route-bar{
-  position:absolute;left:10px;right:10px;bottom:68px;z-index:10;
+  position:absolute;left:10px;right:10px;
+  bottom:calc(68px + env(safe-area-inset-bottom,0px));
+  z-index:10;
   background:rgba(13,17,23,0.96);border:1px solid rgba(0,230,118,.35);
   border-radius:18px;padding:0;
   display:flex;align-items:stretch;gap:0;overflow:hidden;
@@ -387,7 +419,8 @@ body.light .ble-log{box-shadow:none}
   display:flex;align-items:center;gap:0;padding:0;
   background:rgba(13,17,23,0.96);border-top:1px solid var(--border);
   backdrop-filter:blur(12px);flex-shrink:0;position:relative;z-index:10;
-  height:56px;
+  height:calc(56px + env(safe-area-inset-bottom,0px));
+  padding-bottom:env(safe-area-inset-bottom,0px);
 }
 /* Tombol BLE/Dashboard — kiri */
 .nav-ctrl-btn{
@@ -902,14 +935,14 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .eff-trend.flat{background:rgba(255,255,255,.06);color:var(--muted)}
 
 /* ── RIDE LOCK + MAP ACTION BUTTONS ── */
-.ride-lock-fab{position:absolute;bottom:166px;right:10px;width:40px;height:40px;border-radius:10px;background:rgba(13,17,23,0.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:20;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s,bottom .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.ride-lock-fab{position:absolute;bottom:calc(166px + env(safe-area-inset-bottom,0px));right:10px;width:40px;height:40px;border-radius:10px;background:rgba(13,17,23,0.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:20;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s,bottom .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
 .ride-lock-fab:active{background:rgba(0,0,0,.8)}
-.ride-lock-fab.nav-active{bottom:250px}
+.ride-lock-fab.nav-active{bottom:calc(250px + env(safe-area-inset-bottom,0px))}
 
 /* Preview rute (zoom out seluruh rute) */
-.map-preview-btn{position:absolute;right:10px;bottom:116px;z-index:20;background:rgba(13,17,23,0.9);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:background .15s,bottom .2s;font-size:16px}
+.map-preview-btn{position:absolute;right:10px;bottom:calc(116px + env(safe-area-inset-bottom,0px));z-index:20;background:rgba(13,17,23,0.9);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:background .15s,bottom .2s;font-size:16px}
 .map-preview-btn:hover{background:var(--card2)}
-.map-preview-btn.nav-active{bottom:200px}
+.map-preview-btn.nav-active{bottom:calc(200px + env(safe-area-inset-bottom,0px))}
 
 /* Fullscreen lock overlay */
 #rideLockOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:space-between;padding:48px 24px 52px;user-select:none;-webkit-user-select:none}
@@ -1245,6 +1278,19 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
           <div class="batt-label">SOH</div>
           <div class="batt-val" id="sohValBatt">— %</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Charging estimate — tampil saat IBAT > 0 dan SPD = 0 -->
+    <div id="battChargeLine" style="display:none;margin:0 14px 10px;
+         background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);
+         border-radius:12px;padding:12px 16px;
+         font-size:13px;font-weight:600;color:#00d4ff;
+         align-items:center;gap:8px">
+      <span style="font-size:18px;animation:chargePulse 1.4s ease-in-out infinite">⚡</span>
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-weight:500;margin-bottom:2px">ESTIMASI PENGISIAN DAYA</div>
+        <div id="battChargeEst">Mengisi daya...</div>
       </div>
     </div>
   </div>
@@ -1931,10 +1977,43 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 <div class="modal-overlay" id="disconnModal">
   <div class="modal">
     <h3>Putuskan Koneksi?</h3>
-    <p>Motor sedang terhubung. Apakah kamu ingin memutuskan koneksi BLE?</p>
-    <div class="modal-actions">
+    <p>Motor sedang terhubung. Apakah kamu ingin memutuskan koneksi Bluetooth?</p>
+    <div id="macAddressInfo" style="font-size:12px;color:var(--muted);margin-bottom:8px;display:none">
+      MAC: <span id="currentMacLabel">—</span>
+      <span onclick="changeMacAddress()" style="color:var(--green);cursor:pointer;margin-left:8px;font-weight:700">[Ganti]</span>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
       <button class="modal-btn cancel" onclick="closeModal('disconnModal')">BATAL</button>
+      <button class="modal-btn" onclick="forgetAndDisconnect()"
+        style="color:#ff5252;font-size:12px">🗑 Lupa Device</button>
       <button class="modal-btn" onclick="disconnectBLE()">PUTUSKAN</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: BLUETOOTH SCAN -->
+<div class="modal-overlay" id="btScanModal">
+  <div class="modal">
+    <h3>🔵 Pilih Perangkat Bluetooth</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Menampilkan perangkat yang sudah di-<b>pair</b> di HP kamu. Belum ada? Buka <b>Settings → Bluetooth</b> dulu lalu pair motor.</p>
+
+    <!-- Status scanning -->
+    <div id="btScanStatus" style="text-align:center;padding:12px;font-size:13px;color:var(--muted)">
+      <span class="spin" style="font-size:20px">↻</span><br>Mencari perangkat...
+    </div>
+
+    <!-- Daftar device -->
+    <div id="btDeviceList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+
+    <!-- Hint kalau kosong -->
+    <div id="btScanEmpty" style="display:none;text-align:center;padding:16px;font-size:13px;color:var(--muted)">
+      😔 Tidak ada perangkat Bluetooth yang sudah di-pair.<br><br>
+      <span style="font-size:11px">Buka <b>Pengaturan → Bluetooth</b> di HP kamu, lalu pair motor GESITS terlebih dahulu.</span>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal('btScanModal')">BATAL</button>
+      <button class="modal-btn" onclick="startBtScan()" style="color:var(--green)">🔄 REFRESH</button>
     </div>
   </div>
 </div>
@@ -1969,7 +2048,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <h3>⚙️ Pengaturan</h3>
     <div style="font-size:13px;font-weight:600;margin-bottom:8px">🗺️ Sumber Peta</div>
     <div class="preset-row" id="providerBtns" style="margin-bottom:8px">
-      <button type="button" class="preset-btn" id="provBtnMapbox" onclick="pickProvider('mapbox')">Mapbox</button>
+      <button type="button" class="preset-btn" id="provBtnMapbox" onclick="pickProvider('mapbox')" style="display:none">Mapbox</button>
       <button type="button" class="preset-btn" id="provBtnOsm" onclick="pickProvider('osm')">OSM (Gratis)</button>
       <button type="button" class="preset-btn" id="provBtnMaptiler" onclick="pickProvider('maptiler')">MapTiler</button>
     </div>
@@ -2050,6 +2129,10 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <span class="dash-toggle-label">🌱 CO₂ Dihemat</span>
         <label class="dash-switch"><input type="checkbox" id="dashTogCo2"><span class="dash-switch-track"></span></label>
       </div>
+      <div class="dash-toggle-row">
+        <span class="dash-toggle-label">🌤️ Cuaca</span>
+        <label class="dash-switch"><input type="checkbox" id="dashTogWeather"><span class="dash-switch-track"></span></label>
+      </div>
     </div>
     <div class="uuid-field">
       <label>Interval Pergantian (detik)</label>
@@ -2108,10 +2191,22 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 
 <script>
 // ═══════════════════════════════════════════
+// ANDROID NATIVE BRIDGE DETECTION
+// Harus di atas segalanya agar bisa dipakai semua kode di bawah
+// ═══════════════════════════════════════════
+const IS_NATIVE_ANDROID = (typeof Android !== 'undefined');
+
+// ═══════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════
 let MAPBOX_TOKEN = localStorage.getItem('mapbox_tk') || '';
 let MAP_PROVIDER = localStorage.getItem('map_provider') || 'mapbox'; // 'mapbox' | 'osm' | 'maptiler'
+// Di Android native, Mapbox GL JS tidak render dengan benar di WebView
+// Paksa OSM kalau provider-nya Mapbox
+if(IS_NATIVE_ANDROID && MAP_PROVIDER === 'mapbox'){
+  MAP_PROVIDER = 'osm';
+  localStorage.setItem('map_provider', 'osm');
+}
 let MAPTILER_KEY = localStorage.getItem('maptiler_key') || '';
 let BATTERY_CAPACITY_AH = parseFloat(localStorage.getItem('batt_capacity_ah')) || 20;
 let BATTERY_NOMINAL_V   = parseFloat(localStorage.getItem('batt_nominal_v'))   || 72;
@@ -2124,10 +2219,146 @@ let SNAP_H = parseInt(localStorage.getItem('snap_h')) || 220;
 
 // ── DASHBOARD ROTATION (AT+NAV multi-data) ──
 let DASH_ROTATE_SEC = parseInt(localStorage.getItem('dash_rotate_sec')) || 5;
+let _navWeatherStr  = null; // string cuaca singkat untuk rotasi AT+NAV
 let DASH_TOGGLES = (()=>{
-  try{ return JSON.parse(localStorage.getItem('dash_toggles')) || {range:true, trip:true, energi:false, efisiensi:false, co2:false}; }
-  catch(e){ return {range:true, trip:true, energi:false, efisiensi:false, co2:false}; }
+  try{ return JSON.parse(localStorage.getItem('dash_toggles')) || {range:true, trip:true, energi:false, efisiensi:false, co2:false, weather:false}; }
+  catch(e){ return {range:true, trip:true, energi:false, efisiensi:false, co2:false, weather:false}; }
 })();
+
+// ═══════════════════════════════════════════
+// ANDROID NATIVE BRIDGE CALLBACKS
+// ═══════════════════════════════════════════
+window.onBtData = function(line) {
+  line = line.replace(/\r/g,'').trim();
+  if(!line) return;
+  log('← ' + line, 'rx');
+  parseResponse(line);
+};
+
+// ── Dipanggil Java: koneksi putus ──
+window.onBtDisconnected = function() {
+  if(isConnected && !wasManualDisconnect){
+    isConnected = false;
+    stopPolling();
+    setBtState('waiting-reconnect');
+    log('⚠️ Koneksi terputus. Service sedang coba ulang...','err');
+    showToast('⚠️ Koneksi motor terputus');
+  }
+};
+
+// ══════════════════════════════════════════════
+// SPEAK — wrapper TTS
+// Di Android native pakai Android.speak() (TextToSpeech Java)
+// Di browser pakai Web SpeechSynthesis
+// ══════════════════════════════════════════════
+function speakText(text) {
+  if(!text || text.trim() === '') return;
+
+  if(IS_NATIVE_ANDROID){
+    try{
+      Android.stopSpeak();
+      Android.speak(text);
+    }catch(e){
+      // Fallback ke Web SpeechSynthesis kalau bridge gagal
+      _webSpeak(text);
+    }
+    return;
+  }
+  _webSpeak(text);
+}
+
+function stopSpeak() {
+  if(IS_NATIVE_ANDROID){
+    try{ Android.stopSpeak(); }catch(e){}
+    return;
+  }
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
+function _webSpeak(text) {
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'id-ID';
+  utt.rate = 0.95;
+  window.speechSynthesis.speak(utt);
+}
+
+// ── Dipanggil Java: berhasil reconnect otomatis ──
+window.onBtReconnected = function() {
+  isConnected          = true;
+  wasManualDisconnect  = false;
+  odoCheckedThisSession = false;
+  lastEnergyTs         = null;
+  setBtState('connected');
+  sendTimeCmd();
+  setTimeout(() => {
+    log('Mulai polling...','sys');
+    startPolling(); // startPolling sudah include startMapsStream()
+  }, 2000);
+  log('✅ Motor tersambung kembali otomatis','sys');
+  showToast('✅ Motor tersambung kembali');
+};
+
+// ── Dipanggil Java: sedang auto-connect saat app dibuka ──
+window.onAutoConnecting = function(mac) {
+  setBtState('connecting');
+  log('🔄 Auto-connect ke ' + mac + '...','sys');
+};
+
+// ── Dipanggil Java: auto-connect berhasil saat app dibuka ──
+window.onBtAutoConnected = function() {
+  if(isConnected) return;
+  isConnected           = true;
+  wasManualDisconnect   = false;
+  odoCheckedThisSession = false;
+  lastEnergyTs          = null;
+  setBtState('connected');
+  document.getElementById('lastConn').textContent =
+    'Hari ini ' + new Date().toTimeString().slice(0,5);
+  sendTimeCmd();
+  setTimeout(() => { log('Mulai polling...','sys'); startPolling(); }, 2000);
+  log('✅ Auto-connect berhasil','sys');
+  showToast('✅ Motor terhubung otomatis');
+};
+
+// ── Dipanggil Java saat HP diputar ──
+window.onNativeOrientationChange = function(orientation) {
+  if(orientation === 'landscape') {
+    enterNavFullscreen();
+  } else {
+    exitNavFullscreen();
+  }
+};
+
+function enterNavFullscreen() {
+  // Pindah ke tab navigasi
+  const navTab = document.querySelector('[data-screen="screen-navigasi"]') ||
+                 document.querySelector('.tab-btn[onclick*="navigasi"]');
+  if(navTab) navTab.click();
+
+  // Pakai class yang sudah ada di CSS
+  document.body.classList.add('landscape-mode');
+  document.documentElement.classList.add('landscape-nav');
+
+  // Resize peta setelah layout selesai
+  setTimeout(() => {
+    if(typeof map !== 'undefined' && map && map.resize) map.resize();
+    if(typeof mapInstance !== 'undefined' && mapInstance && mapInstance.resize) mapInstance.resize();
+    window.dispatchEvent(new Event('resize'));
+  }, 350);
+}
+
+function exitNavFullscreen() {
+  document.body.classList.remove('landscape-mode');
+  document.documentElement.classList.remove('landscape-nav');
+
+  setTimeout(() => {
+    if(typeof map !== 'undefined' && map && map.resize) map.resize();
+    if(typeof mapInstance !== 'undefined' && mapInstance && mapInstance.resize) mapInstance.resize();
+    window.dispatchEvent(new Event('resize'));
+  }, 350);
+}
 
 // ═══════════════════════════════════════════
 // BLE STATE
@@ -2388,6 +2619,25 @@ async function fetchHomeWeather(force=false){
 
     document.getElementById('hwwIcon').textContent = moodIcon;
     document.getElementById('hwwMood').textContent = mood + ` · ${temp}°C 💨${wind}`;
+    // Simpan string informatif untuk rotasi AT+NAV (tanpa emoji, hanya teks)
+    // Pemetaan mood ke kalimat singkat tanpa tanda baca rumit, maks 40 karakter
+    let navWeatherMsg;
+    if(rain >= 70){
+      navWeatherMsg = 'Hujan bawa jas hujan';    // 20 char pas
+    } else if(wind >= 35){
+      navWeatherMsg = 'Angin kencang waspada';   // 21 -> P1: Angin kencang / P2: waspada
+    } else if(temp >= 36){
+      navWeatherMsg = 'Panas terik hidrasi';     // 19 char
+    } else if(rain >= 40){
+      navWeatherMsg = 'Hujan bawa jas hujan';    // 20 char pas
+    } else if(temp >= 30 && wind < 20 && rain < 30){
+      navWeatherMsg = 'Cerah riding aman';        // 17 char
+    } else if(temp < 22){
+      navWeatherMsg = 'Sejuk riding aman';        // 17 char
+    } else {
+      navWeatherMsg = 'Cerah riding aman';        // 17 char
+    }
+    _navWeatherStr = navWeatherMsg;
     const w = document.getElementById('homeWeatherWidget');
     if(w) w.style.display = 'flex';
   } catch(e){
@@ -2839,12 +3089,21 @@ function exportTripCSV(){
     t.socEnd||'',
   ]);
   const csv = [headers, ...rows].map(r=>r.join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href=url; a.download=`gesits-trip-${Date.now()}.csv`;
-  a.click(); URL.revokeObjectURL(url);
-  showToast('📥 CSV diunduh');
+  const filename = `gesits-trip-${Date.now()}.csv`;
+
+  if(IS_NATIVE_ANDROID){
+    // Android native — pakai FileProvider via bridge
+    try{ Android.exportFile(filename, csv, 'text/csv'); }
+    catch(e){ showToast('Export gagal: '+e.message); }
+  } else {
+    // Browser / PWA — download biasa
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=filename;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('📥 CSV diunduh');
+  }
 }
 
 // ============================================================
@@ -3050,10 +3309,12 @@ function drawTripCompareChart(){
 function shareLocation(){
   if(!userLat||!userLng){ showToast('GPS belum aktif'); return; }
   const mapsUrl=`https://www.google.com/maps?q=${userLat},${userLng}`;
-  const text=`📍 Lokasi saya sekarang:
-${mapsUrl}
+  const text=`📍 Lokasi saya sekarang:\n${mapsUrl}\n\nDikirim via GESITS Dashboard`;
 
-Dikirim via GESITS Dashboard`;
+  if(IS_NATIVE_ANDROID){
+    try{ Android.shareText(text, 'Lokasi saya'); }catch(e){}
+    return;
+  }
   if(navigator.share){
     navigator.share({title:'Lokasi saya', text, url:mapsUrl}).catch(()=>{});
   } else {
@@ -3430,6 +3691,14 @@ function hideDevLog(){
 
 // ── BLE CONNECT ──
 async function connectBLE(){
+  // ── MODE ANDROID NATIVE ──
+  if(IS_NATIVE_ANDROID){
+    // Buka modal scan → user pilih device dari daftar paired
+    startBtScan();
+    return;
+  }
+
+  // ── MODE WEB SERIAL (browser/PWA) ──
   if(!navigator.serial){log('Web Serial tidak didukung. Gunakan Chrome.','err');return;}
   setBtState('connecting');
   log('Memilih port serial Bluetooth...','sys');
@@ -3458,8 +3727,6 @@ async function connectBLE(){
     if(err.name==='NotFoundError'||err.name==='AbortError'){
       log('Tidak ada port dipilih.','sys');
     } else if(/already open/i.test(err.message||'') || /InvalidStateError/i.test(err.name||'')){
-      // Port nyangkut dlm status open dari sesi/percobaan sebelumnya yg gagal cleanup.
-      // Paksa tutup supaya percobaan klik berikutnya tdk gagal dgn error sama.
       log('Port masih berstatus terbuka dari sesi sebelumnya, mencoba membersihkan...','sys');
       if(failedPort){
         try{ await failedPort.close(); log('✓ Port berhasil dibersihkan. Coba hubungkan lagi.','sys'); }
@@ -3470,6 +3737,101 @@ async function connectBLE(){
       log('Error: '+(err.message||err),'err');
     }
   }
+}
+
+// ── ANDROID BLUETOOTH SCAN ──
+function startBtScan(){
+  // Reset UI modal
+  const list   = document.getElementById('btDeviceList');
+  const status = document.getElementById('btScanStatus');
+  const empty  = document.getElementById('btScanEmpty');
+  list.innerHTML = '';
+  empty.style.display = 'none';
+  status.style.display = 'block';
+  status.innerHTML = '<span class="spin" style="font-size:20px">↻</span><br>Mencari perangkat...';
+
+  // Buka modal
+  document.getElementById('btScanModal').classList.add('show');
+
+  if(!IS_NATIVE_ANDROID){
+    status.innerHTML = '⚠️ Fitur ini hanya tersedia di Android native.';
+    return;
+  }
+
+  // Minta Java kirim daftar paired devices
+  Android.startScan();
+}
+
+// Dipanggil Java untuk setiap device yang ditemukan
+window.onBtDevice = function(name, mac){
+  const list   = document.getElementById('btDeviceList');
+  const status = document.getElementById('btScanStatus');
+  status.style.display = 'none'; // sembunyikan spinner
+
+  const item = document.createElement('div');
+  item.style.cssText = [
+    'background:var(--card)',
+    'border:1px solid var(--border)',
+    'border-radius:12px',
+    'padding:13px 14px',
+    'display:flex',
+    'align-items:center',
+    'gap:12px',
+    'cursor:pointer',
+    'transition:background .15s',
+    '-webkit-tap-highlight-color:transparent'
+  ].join(';');
+
+  item.innerHTML = `
+    <div style="font-size:24px;flex-shrink:0">🔵</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:700;color:var(--text);
+           white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:monospace">${mac}</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--green);
+         padding:5px 10px;border:1px solid var(--green);border-radius:8px;flex-shrink:0">
+      PILIH
+    </div>`;
+
+  item.addEventListener('click', ()=> selectBtDevice(name, mac));
+  list.appendChild(item);
+};
+
+// Dipanggil Java setelah semua device dikirim
+window.onBtScanDone = function(){
+  const list   = document.getElementById('btDeviceList');
+  const status = document.getElementById('btScanStatus');
+  const empty  = document.getElementById('btScanEmpty');
+  status.style.display = 'none';
+  if(list.children.length === 0){
+    empty.style.display = 'block';
+  }
+};
+
+// User tap salah satu device
+function selectBtDevice(name, mac){
+  closeModal('btScanModal');
+  log('Device dipilih: '+name+' ('+mac+')','sys');
+  setBtState('connecting');
+  wasManualDisconnect = false;
+  // Android.connect() otomatis simpan MAC ke SharedPreferences untuk auto-connect berikutnya
+  Android.connect(mac);
+
+  // Tunggu 2.5 detik lalu cek apakah sudah connected
+  setTimeout(()=>{
+    if(Android.isConnected() && !isConnected){
+      isConnected           = true;
+      odoCheckedThisSession = false;
+      lastEnergyTs          = null;
+      setBtState('connected');
+      document.getElementById('lastConn').textContent =
+        'Hari ini ' + new Date().toTimeString().slice(0,5);
+      sendTimeCmd();
+      log('Terhubung ke '+name+' ✓','sys');
+      setTimeout(()=>{ log('Mulai polling...','sys'); startPolling(); }, 2000);
+    }
+  }, 2500);
 }
 
 async function startReadLoop(){
@@ -3590,6 +3952,7 @@ function parseResponse(raw){
       renderBatteryIcon(num);
       updateBattPower();
       updateRangeEstimate();
+      updateSocBar(num); // [FIX-SOC] update progress bar setiap SOC baru masuk
       // Notifikasi baterai rendah
       if(num < 15 && !lowBattNotified){
         notify('🔋 Baterai Rendah', `SOC tersisa ${num}% — segera cas baterai motor.`);
@@ -3682,6 +4045,7 @@ function parseResponse(raw){
         }
       }
       updateLivePowerSummary(); updateBattPower(); updateRangeEstimate();
+      updateChargingEstimate(); // [FIX2] tampilkan estimasi charging saat IBAT update
       if(document.getElementById('screen-diagnosis').classList.contains('active')) drawChart();
       break;
     case 'CBAT':
@@ -3733,7 +4097,19 @@ function renderBatteryIcon(pct){
 
 // ── SEND ──
 async function sendCmd(cmd){
-  if(!serialWriter||!isConnected) return;
+  if(!isConnected) return;
+  // Mode Android native
+  if(IS_NATIVE_ANDROID){
+    try{
+      Android.send(cmd.replace(/\r\n$/,''));
+      log('→ '+cmd.replace(/\r\n/g,'\\r\\n'),'tx');
+    }catch(e){
+      log('Send error (native): '+e.message,'err');
+    }
+    return;
+  }
+  // Mode Web Serial
+  if(!serialWriter) return;
   try{
     await serialWriter.ready;
     await serialWriter.write(new TextEncoder().encode(cmd));
@@ -3751,11 +4127,40 @@ function startPolling(){
   pollTimer=setInterval(()=>{ if(isConnected) sendCmd(POLL_CMDS[pollIdx++%POLL_CMDS.length]); },500);
   startTripRangeSender();
   startDashRotation();
+  startMapsStream(); // AT+MAPS jalan terus selama koneksi aktif
 }
 function stopPolling(){
   if(pollTimer){clearInterval(pollTimer);pollTimer=null;} pollIdx=0;
   stopTripRangeSender();
   stopDashRotation();
+  stopMapsStream(); // hentikan AT+MAPS
+}
+
+// ── AT+MAPS STREAM ──
+// Dikirim terus-menerus selama isConnected, tidak peduli tab/navigasi
+let mapsStreamTimer = null;
+let mapsStreamBusy  = false; // cegah tumpang tindih kalau snapshot lambat
+
+function startMapsStream(){
+  stopMapsStream();
+  // Tunggu 3 detik pertama agar peta sempat init
+  mapsStreamTimer = setInterval(async () => {
+    if(!isConnected || mapsStreamBusy) return;
+    if(!mapInstance){
+      // Peta belum init — coba init dulu kalau bisa
+      if(canInitMap() && !mapInitialized) initMap();
+      return;
+    }
+    mapsStreamBusy = true;
+    try { await captureAndSend(); }
+    catch(e){ log('AT+MAPS error: '+e.message,'err'); }
+    finally { mapsStreamBusy = false; }
+  }, 3000); // kirim tiap 3 detik
+}
+
+function stopMapsStream(){
+  if(mapsStreamTimer){ clearInterval(mapsStreamTimer); mapsStreamTimer=null; }
+  mapsStreamBusy = false;
 }
 
 // ── AT+TRIP: sisa jarak (range), dikirim sering & independen dari AT+NAV ──
@@ -3794,6 +4199,10 @@ function getDashRotationItems(){
     const co2 = calcCO2Saving(distKm, tripEnergyWh);
     items.push(co2 ? `CO2 Hemat ${co2>=1000?(co2/1000).toFixed(2)+' kg':co2.toFixed(0)+' g'}` : 'CO2 Hemat 0 g');
   }
+  // Cuaca — gunakan data yang sudah di-fetch ke home widget
+  if(DASH_TOGGLES.weather && _navWeatherStr){
+    items.push(_navWeatherStr);
+  }
   // Saat navigasi aktif, nama jalan yg sedang dilalui ikut masuk giliran yang sama
   if(navActive){
     const roadStep = currentStepIdx > 0 ? routeSteps[currentStepIdx-1] : routeSteps[currentStepIdx];
@@ -3807,6 +4216,16 @@ function getDashRotationItems(){
   return items;
 }
 
+// Potong teks maks N karakter di batas kata (tidak potong di tengah kata)
+function splitAtWordBoundary(text, maxLen){
+  if(text.length <= maxLen) return [text];
+  let cutAt = text.lastIndexOf(' ', maxLen);
+  if(cutAt <= 0) cutAt = maxLen;
+  const part1 = text.substring(0, cutAt).trim();
+  const part2 = text.substring(cutAt).trim();
+  return part2 ? [part1, part2] : [part1];
+}
+
 function sendDashRotationTick(){
   if(!isConnected) return;
   const items = getDashRotationItems();
@@ -3814,7 +4233,27 @@ function sendDashRotationTick(){
   if(dashRotateIdx >= items.length) dashRotateIdx = 0;
   const text = items[dashRotateIdx];
   dashRotateIdx = (dashRotateIdx+1) % items.length;
-  sendCmd(`AT+NAV="${text}"\r\n`);
+
+  // Jika teks melebihi 20 karakter, kirim dalam 2 bagian berurutan
+  const MAX_DASH_CHARS = 20;
+  if(text.length > MAX_DASH_CHARS){
+    const parts = splitAtWordBoundary(text, MAX_DASH_CHARS);
+    sendCmd(`AT+NAV="${parts[0]}"\r\n`);
+    if(parts[1]){
+      setTimeout(()=>{
+        if(isConnected) sendCmd(`AT+NAV="${parts[1]}"\r\n`);
+      }, 1500);
+    }
+    if(IS_NATIVE_ANDROID){
+      try { Android.setNavData(parts[0]); } catch(e) {}
+    }
+  } else {
+    sendCmd(`AT+NAV="${text}"\r\n`);
+    // Update Java dengan data NAV terkini agar bisa dikirim ulang saat layar mati
+    if(IS_NATIVE_ANDROID){
+      try { Android.setNavData(text); } catch(e) {}
+    }
+  }
 }
 
 function startDashRotation(){
@@ -3951,6 +4390,16 @@ async function disconnectBLE(){
   wasManualDisconnect = true;
   stopReconnectWatcher();
   isConnected=false;
+  stopPolling();
+
+  if(IS_NATIVE_ANDROID){
+    try{ Android.disconnect(); }catch(e){}
+    setBtState('disconnected');
+    log('Koneksi diputuskan.','sys');
+    return;
+  }
+
+  // Web Serial
   try{
     if(serialReader){await serialReader.cancel();serialReader=null;}
     if(serialWriter){serialWriter.releaseLock();serialWriter=null;}
@@ -3988,7 +4437,12 @@ function setBtState(state){
     if(profileStatus) profileStatus.textContent='⏳ Terputus — menunggu motor nyala lagi';
   } else if(state==='connected'){
     btn.classList.add('connected');
-    const portName = serialPort ? 'GESITS' : 'Terhubung';
+    let portName;
+    if(IS_NATIVE_ANDROID){
+      portName = localStorage.getItem('bt_mac') || 'GESITS';
+    } else {
+      portName = serialPort ? 'GESITS' : 'Terhubung';
+    }
     icon.textContent='●'; label.textContent=portName;
     dot.className='status-dot on'; dot.textContent='Terhubung';
     if(navDot) navDot.textContent='●';
@@ -4004,8 +4458,37 @@ function setBtState(state){
     if(profileStatus) profileStatus.textContent='⚪ Belum terhubung';
   }
 }
+function forgetAndDisconnect(){
+  closeModal('disconnModal');
+  wasManualDisconnect = true;
+  isConnected = false;
+  stopPolling();
+  if(IS_NATIVE_ANDROID){
+    Android.forgetDevice(); // hapus MAC dari SharedPreferences + disconnect
+    setBtState('disconnected');
+    log('Device dilupakan. Scan ulang untuk connect.','sys');
+    showToast('Device dilupakan');
+  }
+}
+
+function changeMacAddress(){
+  closeModal('disconnModal');
+  startBtScan();
+}
+
 function onBtClick(){
-  if(isConnected) document.getElementById('disconnModal').classList.add('show');
+  if(isConnected){
+    // Tampilkan MAC di modal disconnect jika native Android
+    if(IS_NATIVE_ANDROID){
+      const macInfo = document.getElementById('macAddressInfo');
+      const macLabel = document.getElementById('currentMacLabel');
+      if(macInfo && macLabel){
+        macInfo.style.display = 'block';
+        macLabel.textContent = localStorage.getItem('bt_mac') || '—';
+      }
+    }
+    document.getElementById('disconnModal').classList.add('show');
+  }
   else if(awaitingReconnect) document.getElementById('cancelReconnectModal').classList.add('show');
   else connectBLE();
 }
@@ -4219,15 +4702,24 @@ function initMap(){
   document.getElementById('mapPlaceholder').style.display='none';
   document.getElementById('mapZoomCtrl').style.display='flex';
   document.getElementById('mapRecenterBtn').style.display='flex';
-  mapboxgl.accessToken=MAPBOX_TOKEN||'no-token-needed-for-osm';
+
+  // MapLibre tidak butuh accessToken untuk OSM/raster tiles
+  // Hanya set jika pakai Mapbox (bukan MapLibre)
+  if(typeof mapboxgl.accessToken !== 'undefined' && MAP_PROVIDER === 'mapbox'){
+    mapboxgl.accessToken = MAPBOX_TOKEN || '';
+  }
 
   mapInstance=new mapboxgl.Map({
     container:'mapContainer',
-    style:getMapStyle('night'),
+    style:getMapStyle(localStorage.getItem('map_style')||'day'), // [FIX7] default siang, ingat pilihan user
     center:[106.8456,-6.2088],
     zoom:15,
     attributionControl:false,
     preserveDrawingBuffer:true, // wajib untuk toDataURL snapshot
+    // transformRequest: izinkan semua domain tile di Android WebView
+    transformRequest: (url, resourceType) => {
+      return { url: url };
+    }
   });
   updateMapAttribution();
 
@@ -4241,12 +4733,16 @@ function initMap(){
   }
   mapInstance.once('load', ()=>mapInstance.resize());
 
-  // User marker — custom photo (popup pin) or default arrow
-  const arrowEl = buildUserMarkerEl();
-  userMarker=new mapboxgl.Marker({element:arrowEl,anchor:userMarkerAnchor(),rotationAlignment:'viewport'})
+  // User marker — mulai dengan mode free drive (dot bulat biru)
+  const arrowEl = buildUserMarkerEl('freedrive');
+  userMarker=new mapboxgl.Marker({
+      element: arrowEl,
+      anchor: userMarkerAnchor('freedrive'),
+      rotationAlignment: 'viewport'
+    })
     .setLngLat([106.8456,-6.2088]).addTo(mapInstance);
-  // Refresh marker icon jika ada custom tersimpan
-  if(localStorage.getItem(MARKER_KEY)) rebuildUserMarker();
+  // Rebuild jika ada foto custom tersimpan
+  if(localStorage.getItem(MARKER_KEY)) rebuildUserMarker('freedrive');
 
   // Tap on map → set destination
   // Deteksi user drag — stop auto-center sementara
@@ -4304,14 +4800,15 @@ function initMap(){
     },{enableHighAccuracy:true,maximumAge:1500});
   }
 
-  // Set default style malam
-  currentStyle='night'; updateStyleBtns();
+  // Set default style dari localStorage (default: siang)
+  currentStyle=localStorage.getItem('map_style')||'day'; updateStyleBtns();
 }
 
 // ── MAP STYLE ──
 function setMapStyle(style){
   if(!mapInstance) return;
   currentStyle=style;
+  localStorage.setItem('map_style', style); // [FIX7] simpan pilihan style
   mapInstance.setStyle(getMapStyle(style));
   mapInstance.once('styledata',()=>{
     if(routeActive) redrawRoute();
@@ -4607,25 +5104,44 @@ async function fetchRoute(fromLng,fromLat,toLng,toLat,isNav=false){
   if(MAP_PROVIDER==='mapbox' && !MAPBOX_TOKEN) return;
   try{
     let routes;
-    if(MAP_PROVIDER==='osm'){
-      // OSRM public demo server — gratis, tanpa API key (catatan: tidak mendukung exclude=motorway)
-      const url=`https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&steps=true&overview=full&alternatives=true`;
-      const r=await fetch(url);
-      const d=await r.json();
-      if(d.code!=='Ok' || !d.routes || !d.routes.length){document.getElementById('destMeta').textContent='Rute tidak ditemukan';return;}
-      routes=d.routes;
+    if(MAP_PROVIDER==='osm' || MAP_PROVIDER==='maptiler'){
+      // OSRM servers — coba satu per satu kalau gagal
+      const osrmServers = [
+        `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&steps=true&overview=full&alternatives=true`,
+        `https://routing.openstreetmap.de/routed-car/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&steps=true&overview=full&alternatives=true`,
+      ];
+      let d = null;
+      for(const url of osrmServers){
+        try{
+          const r = await Promise.race([
+            fetch(url),
+            new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 8000))
+          ]);
+          d = await r.json();
+          if(d.code === 'Ok' && d.routes && d.routes.length) break;
+        }catch(e){ log('OSRM server gagal, coba berikutnya...','sys'); }
+      }
+      if(!d || d.code!=='Ok' || !d.routes || !d.routes.length){
+        document.getElementById('destMeta').textContent='Rute tidak ditemukan';
+        showToast('⚠️ Server routing tidak merespons. Coba lagi.');
+        return;
+      }
+      routes = d.routes;
     } else {
-      // exclude=motorway: hindari jalan tol (untuk motor) — alternatives=true: minta rute alternatif
+      // Mapbox
       const url=`https://api.mapbox.com/directions/v5/mapbox/driving/${fromLng},${fromLat};${toLng},${toLat}?geometries=geojson&steps=true&language=id&exclude=motorway&alternatives=true&access_token=${MAPBOX_TOKEN}`;
       const r=await fetch(url);
       const d=await r.json();
       if(!d.routes||!d.routes.length){document.getElementById('destMeta').textContent='Rute tidak ditemukan';return;}
       routes=d.routes;
     }
-    allRoutes = routes.slice(0,3); // maksimal 3 pilihan biar nggak ramai
+    allRoutes = routes.slice(0,3);
     selectedRouteIdx = 0;
     applySelectedRoute(isNav);
-  }catch(e){log('Route error: '+e.message,'err');}
+  }catch(e){
+    log('Route error: '+e.message,'err');
+    showToast('⚠️ Gagal mengambil rute: '+e.message);
+  }
 }
 
 // Pakai data rute yg sudah ada di allRoutes[selectedRouteIdx] — tanpa fetch ulang
@@ -4922,15 +5438,13 @@ function startNavigation(){
   const distEl=document.getElementById('rbArrowDist');
   if(distEl) distEl.textContent='—';
   fetchRoute(userLng,userLat,destLng,destLat,true);
-  startEtaTicker(); // mulai ETA real-time ticker 1 detik
-  // Cuaca + elevasi tujuan — tampilkan versi ringkas di overlay (pakai data yang sudah ada, no extra request)
+  startEtaTicker();
   updateOverlayWeatherElev();
-  // Zoom ke posisi user saat mulai navigasi
   mapInstance.flyTo({center:[userLng,userLat],zoom:17,pitch:45,bearing:userHeading,duration:800});
   log('Navigasi dimulai ke: '+destLabel,'sys');
-  // Mulai kirim snapshot ke dashboard
-  clearInterval(snapInterval);
-  snapInterval=setInterval(()=>captureAndSend(),3000);
+  // Ganti marker ke mode arrow saat navigasi aktif
+  rebuildUserMarker('nav');
+  // AT+MAPS sudah jalan via mapsStreamTimer
 }
 
 function stopNavigation(){
@@ -4939,7 +5453,7 @@ function stopNavigation(){
   rerouteInProgress=false;
   clearTimeout(rerouteCooldownTimer); rerouteCooldownTimer=null;
   clearTimeout(panResetTimer);
-  clearInterval(snapInterval); snapInterval=null;
+  // snapInterval sudah digantikan mapsStreamTimer — tidak perlu clear di sini
   stopEtaTicker(); // hentikan ETA ticker
   document.getElementById('routeBar').style.display='none';
   document.getElementById('mapRecenterBtn').classList.remove('nav-active');
@@ -4953,13 +5467,14 @@ function stopNavigation(){
   clearRouteLayer(); clearDestination();
   mapInstance.flyTo({pitch:0,bearing:0,zoom:15,duration:600});
   log('Navigasi dihentikan.','sys');
+  // Kembalikan marker ke dot bulat saat free drive
+  rebuildUserMarker('freedrive');
 }
 
 // ── ARRIVAL BANNER ──
 function showArrivalBanner(){
   // Suara
-  const sp = new SpeechSynthesisUtterance('Anda telah tiba di tujuan');
-  sp.lang = 'id-ID'; window.speechSynthesis.speak(sp);
+  speakText('Anda telah tiba di tujuan');
   // Banner overlay
   let banner = document.getElementById('arrivalBanner');
   if(!banner){
@@ -5027,9 +5542,8 @@ async function triggerReroute(){
   if(poly){ poly.setAttribute('points','22,4 30,38 22,30 14,38'); poly.setAttribute('fill','#ffa726'); }
 
   showToast('🔄 Off jalur — menghitung ulang rute...');
-  window.speechSynthesis.cancel();
-  const sp = new SpeechSynthesisUtterance('Off jalur, menghitung ulang rute');
-  sp.lang = 'id-ID'; window.speechSynthesis.speak(sp);
+  stopSpeak();
+  speakText('Off jalur, menghitung ulang rute');
 
   // Fetch rute baru dari posisi terkini
   await fetchRoute(userLng, userLat, destLng, destLat, true);
@@ -5222,8 +5736,7 @@ function updateStepDisplay(){
   // Voice
   if(dist<150 && lastSpokenStep!==currentStepIdx){
     lastSpokenStep=currentStepIdx;
-    const sp=new SpeechSynthesisUtterance('Dalam '+distStr+', '+instr);
-    sp.lang='id-ID'; window.speechSynthesis.speak(sp);
+    speakText('Dalam '+distStr+', '+instr);
   }
   return navText;
 }
@@ -5256,7 +5769,10 @@ function maneuverLongTextID(step){
 
 // ── SNAPSHOT & AT+MAPS ──
 async function captureAndSend(){
-  if(!navActive||!serialWriter||!mapInstance) return;
+  // Cukup cek mapInstance dan koneksi — tidak perlu navigasi aktif
+  if(!mapInstance) return;
+  if(IS_NATIVE_ANDROID && !isConnected) return;
+  if(!IS_NATIVE_ANDROID && !serialWriter) return;
   try{
     const b64=await snapMapToBase64();
     if(!b64) return;
@@ -5585,31 +6101,49 @@ async function snapMapToBase64(){
         img.src=customB64;
       });
     } else {
-      // Arrow default — proporsional zoom
-      // PENTING: TIDAK di-rotate pakai userHeading. Canvas map (mapInstance.getCanvas())
-      // yang di-capture di atas SUDAH dalam kondisi bearing=userHeading (lihat easeTo
-      // saat navActive), jadi "atas" snapshot = arah hadap motor. Sama persis seperti
-      // marker live di app yang pakai rotationAlignment:'viewport' (arrow diam, map yang
-      // berputar). Kalau di sini di-rotate lagi pakai userHeading → rotasi dobel, arah
-      // panah snapshot jadi beda sama marker live di app.
-      const arrowH=R*1.4, arrowW=R*0.9;
-      ctx.save();
-      ctx.translate(cx,cy);
-      ctx.beginPath();
-      ctx.moveTo(0,-arrowH);
-      ctx.lineTo(arrowW,arrowH*0.5);
-      ctx.lineTo(0,arrowH*0.2);
-      ctx.lineTo(-arrowW,arrowH*0.5);
-      ctx.closePath();
-      ctx.fillStyle='#2979ff';
-      ctx.strokeStyle='#fff';ctx.lineWidth=Math.max(1,R*0.15);
-      ctx.fill();ctx.stroke();
-      ctx.restore();
-      // Shadow/halo di bawah arrow
-      ctx.save();
-      ctx.beginPath();ctx.arc(cx,cy,R*0.45,0,Math.PI*2);
-      ctx.fillStyle='rgba(41,121,255,0.25)';ctx.fill();
-      ctx.restore();
+      // [FIX-MARKER] Sesuaikan marker snapshot dengan marker di app:
+      // - Freedrive (tidak navigasi) → dot bulat biru (sama dgn buildUserMarkerEl('freedrive'))
+      // - Navigasi aktif → arrow segitiga biru (sama dgn buildUserMarkerEl('nav'))
+      if(!navActive){
+        // ── Dot biru (freedrive) ──
+        // Outer ring transparan
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
+        ctx.fillStyle='rgba(33,150,243,0.22)'; ctx.fill();
+        ctx.strokeStyle='#1565C0'; ctx.lineWidth=Math.max(1, R*0.14);
+        ctx.stroke();
+        ctx.restore();
+        // Cincin putih
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, cy, R*0.70, 0, Math.PI*2);
+        ctx.fillStyle='white'; ctx.fill();
+        ctx.restore();
+        // Dot biru solid
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, cy, R*0.57, 0, Math.PI*2);
+        ctx.fillStyle='#2196F3'; ctx.fill();
+        ctx.restore();
+      } else {
+        // ── Arrow segitiga (navigasi) ──
+        const arrowH=R*1.4, arrowW=R*0.9;
+        ctx.save();
+        ctx.translate(cx,cy);
+        ctx.beginPath();
+        ctx.moveTo(0,-arrowH);
+        ctx.lineTo(arrowW,arrowH*0.5);
+        ctx.lineTo(0,arrowH*0.2);
+        ctx.lineTo(-arrowW,arrowH*0.5);
+        ctx.closePath();
+        ctx.fillStyle='#2979ff';
+        ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(1,R*0.15);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+        // Halo bawah arrow
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, cy, R*0.45, 0, Math.PI*2);
+        ctx.fillStyle='rgba(41,121,255,0.25)'; ctx.fill();
+        ctx.restore();
+      }
     }
 
     // ── Encode JPEG dengan quality adaptif ──
@@ -5681,6 +6215,7 @@ function openSettings(){
   document.getElementById('dashTogEnergi').checked=!!DASH_TOGGLES.energi;
   document.getElementById('dashTogEfisiensi').checked=!!DASH_TOGGLES.efisiensi;
   document.getElementById('dashTogCo2').checked=!!DASH_TOGGLES.co2;
+  document.getElementById('dashTogWeather').checked=!!DASH_TOGGLES.weather;
   document.getElementById('inDashRotateSec').value=DASH_ROTATE_SEC;
   renderSnapPresets();
   pickProvider(MAP_PROVIDER);
@@ -5749,6 +6284,7 @@ function saveSettings(){
     energi:    document.getElementById('dashTogEnergi').checked,
     efisiensi: document.getElementById('dashTogEfisiensi').checked,
     co2:       document.getElementById('dashTogCo2').checked,
+    weather:   document.getElementById('dashTogWeather').checked,
   };
   let dashRotateSec = parseInt(document.getElementById('inDashRotateSec').value)||5;
   dashRotateSec = Math.min(60, Math.max(2, dashRotateSec));
@@ -5773,7 +6309,7 @@ function saveSettings(){
   }
   const providerChanged = pendingProvider !== MAP_PROVIDER;
   MAPBOX_TOKEN=tok; MAPTILER_KEY=maptilerKey; MAP_PROVIDER=pendingProvider;
-  if(typeof mapboxgl!=='undefined') mapboxgl.accessToken=MAPBOX_TOKEN||'no-token-needed-for-osm';
+  if(typeof mapboxgl!=='undefined' && MAP_PROVIDER==='mapbox') mapboxgl.accessToken=MAPBOX_TOKEN||'';
   BATTERY_NOMINAL_V=nomV; BATTERY_CAPACITY_AH=capAh; REF_WHKM=refWh; OCM_API_KEY=ocmKey;
   SNAP_W=snapW; SNAP_H=snapH;
   DASH_TOGGLES=dashToggles; DASH_ROTATE_SEC=dashRotateSec;
@@ -5825,7 +6361,11 @@ function switchTab(name,el){
     // ini aktif), container masih display:none sehingga ukurannya salah/0.
     else if(mapInstance) setTimeout(()=>mapInstance.resize(),50);
   }
-  if(name==='stats') renderStatsPage();
+  if(name==='stats') {
+    renderStatsPage();
+    renderFuelSavings();
+    renderWeeklyGoal();
+  }
 }
 function switchDiagTab(t){
   document.getElementById('viewThrottle').style.display=t==='throttle'?'':'none';
@@ -6148,8 +6688,17 @@ function tripToGPX(t){
 async function shareTripToStrava(i){
   const t = getTripHistory()[i];
   if(!t || !t.path || t.path.length<2){ showToast('Rute trip ini tidak tercatat, tidak bisa dibuat GPX'); return; }
-  const gpx = tripToGPX(t);
+  const gpx  = tripToGPX(t);
   const fname = `gesits-trip-${new Date(t.date).toISOString().slice(0,10)}.gpx`;
+
+  if(IS_NATIVE_ANDROID){
+    try{
+      Android.exportFile(fname, gpx, 'application/gpx+xml');
+      showToast('✅ GPX diekspor — pilih Strava untuk import aktivitas');
+    }catch(e){ showToast('Export GPX gagal: '+e.message); }
+    return;
+  }
+
   const blob = new Blob([gpx], {type:'application/gpx+xml'});
   const file = new File([blob], fname, {type:'application/gpx+xml'});
   if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
@@ -6159,7 +6708,7 @@ async function shareTripToStrava(i){
       return;
     }catch(e){ if(e.name==='AbortError') return; }
   }
-  // Fallback: tanpa Web Share API (atau gagal) → unduh manual
+  // Fallback browser download
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href=url; a.download=fname; a.click();
@@ -6261,6 +6810,29 @@ async function shareTrip(i){
 
   canvas.toBlob(async (blob)=>{
     if(!blob) return;
+
+    // Android native — konversi blob ke base64 lalu export via Java
+    if(IS_NATIVE_ANDROID){
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        try{
+          // Kirim sebagai PNG via exportFile bridge
+          Android.exportFile('gesits-trip-'+i+'.png',
+            atob(base64).split('').map(c=>c.charCodeAt(0)),
+            'image/png');
+        } catch(e){
+          // Fallback: share teks saja
+          const t2 = getTripHistory()[i];
+          const text = `🏍️ GESITS Trip Summary\n📅 ${new Date(t2.date).toLocaleString('id-ID')}\n📍 ${t2.distance.toFixed(1)} km\n⚡ ${t2.energyWh?.toFixed(0)||'—'} Wh\n🏎️ Avg ${t2.avgSpeed?.toFixed(0)||'—'} km/h`;
+          try{ Android.shareText(text, 'GESITS Trip Summary'); }catch(e2){}
+        }
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+
+    // Browser / PWA
     const file = new File([blob], 'gesits-trip.png', {type:'image/png'});
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       try{ await navigator.share({files:[file], title:'GESITS Trip Summary'}); return; }catch(e){}
@@ -7090,7 +7662,7 @@ function renderHeatmap(){
 
   if(!heatmapInitialized){
     heatmapInitialized = true;
-    mapboxgl.accessToken = MAPBOX_TOKEN || 'no-token-needed-for-osm';
+    if(MAP_PROVIDER==='mapbox') mapboxgl.accessToken = MAPBOX_TOKEN || '';
     heatmapInstance = new mapboxgl.Map({
       container: 'heatmapContainer',
       style: getMapStyle('night'),
@@ -7314,17 +7886,21 @@ function resetMarker(){
 
 // Anchor marker: 'bottom' utk popup foto custom (ujung pointer = lokasi persis),
 // 'center' utk arrow default (biar konsisten seperti sebelumnya)
-function userMarkerAnchor(){
-  return localStorage.getItem(MARKER_KEY) ? 'bottom' : 'center';
+function userMarkerAnchor(mode){
+  if(localStorage.getItem(MARKER_KEY)) return 'bottom';
+  // Arrow navigasi → center (rotasi dari tengah)
+  // Dot free drive → center
+  return 'center';
 }
 
-function buildUserMarkerEl(){
+// mode: 'freedrive' (default dot biru) | 'nav' (arrow segitiga)
+function buildUserMarkerEl(mode){
   const saved = localStorage.getItem(MARKER_KEY);
   const el = document.createElement('div');
   el.style.cssText = 'cursor:pointer;position:relative';
+
   if(saved){
-    // ── Popup foto custom — kotak rounded dengan pointer mengarah KE BAWAH ──
-    // (ukuran lebih besar & lebih jelas dibanding lingkaran kecil sebelumnya)
+    // ── Foto custom — sama untuk semua mode ──
     const PHOTO=72, TAIL=18;
     el.style.width = PHOTO+'px';
     el.style.height = (PHOTO+TAIL)+'px';
@@ -7340,24 +7916,49 @@ function buildUserMarkerEl(){
         style="position:absolute;top:${PHOTO-3}px;left:0;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))">
         <polygon points="${PHOTO/2-12},0 ${PHOTO/2+12},0 ${PHOTO/2},${TAIL}" fill="#00e676"/>
       </svg>`;
-  } else {
-    // Default arrow SVG (tetap seperti sebelumnya kalau belum ada foto kustom)
-    el.style.width = '36px'; el.style.height = '36px';
+
+  } else if(mode === 'nav'){
+    // ── Mode Navigasi: arrow segitiga biru ──
+    el.style.width  = '36px';
+    el.style.height = '36px';
     el.innerHTML = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="18" cy="18" r="16" fill="rgba(41,121,255,0.18)" stroke="#2979ff" stroke-width="2"/>
-      <polygon points="18,5 24,27 18,22 12,27" fill="#2979ff"/>
+      <!-- Lingkaran luar transparan -->
+      <circle cx="18" cy="18" r="17" fill="rgba(41,121,255,0.15)" stroke="#2979ff" stroke-width="1.5"/>
+      <!-- Arrow segitiga mengarah ke atas (arah gerak) -->
+      <polygon points="18,5 26,28 18,22 10,28" fill="#2979ff" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`;
+
+  } else {
+    // ── Mode Free Drive: dot bulat biru (default) ──
+    el.style.width  = '22px';
+    el.style.height = '22px';
+    el.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outline biru luar transparan -->
+      <circle cx="11" cy="11" r="10.5" fill="rgba(33,150,243,0.22)" stroke="#1565C0" stroke-width="1.5"/>
+      <!-- Outline putih -->
+      <circle cx="11" cy="11" r="7.5" fill="white" stroke="white" stroke-width="1"/>
+      <!-- Bulatan biru solid -->
+      <circle cx="11" cy="11" r="6" fill="#2196F3"/>
     </svg>`;
   }
   return el;
 }
 
-function rebuildUserMarker(){
+function rebuildUserMarker(mode){
   if(!mapInstance || !userMarker) return;
   const lngLat = userMarker.getLngLat();
   userMarker.remove();
-  const el = buildUserMarkerEl();
-  userMarker = new mapboxgl.Marker({element: el, anchor: userMarkerAnchor(), rotationAlignment:'viewport'})
-    .setLngLat(lngLat).addTo(mapInstance);
+  const m   = mode || (navActive ? 'nav' : 'freedrive');
+  const el  = buildUserMarkerEl(m);
+  // Nav mode: ikut rotasi heading — Free drive: tidak perlu rotasi
+  const rotAlign = m === 'nav' ? 'map' : 'viewport';
+  userMarker = new mapboxgl.Marker({
+      element: el,
+      anchor: userMarkerAnchor(m),
+      rotationAlignment: rotAlign
+    })
+    .setLngLat(lngLat)
+    .addTo(mapInstance);
 }
 
 
@@ -7486,14 +8087,21 @@ function playStationBell(){
       });
     };
 
-    // Browser mobile blokir audio sebelum ada interaksi user (autoplay policy).
-    // Kalau context masih "suspended", tunggu tap pertama lalu baru bunyi.
-    if (ctx.state === 'suspended') {
+    // Android WebView: setMediaPlaybackRequiresUserGesture(false) tidak unlock
+    // AudioContext (hanya berlaku untuk <audio>/<video>). Paksa resume() dulu,
+    // lalu langsung fire kalau berhasil; fallback pointerdown kalau masih suspended.
+    ctx.resume().then(() => {
+      if (ctx.state === 'running') {
+        fire();
+      } else {
+        const resumeOnce = () => { ctx.resume().then(fire); document.removeEventListener('pointerdown', resumeOnce); };
+        document.addEventListener('pointerdown', resumeOnce, { once: true });
+      }
+    }).catch(() => {
+      // resume() gagal → tunggu tap
       const resumeOnce = () => { ctx.resume().then(fire); document.removeEventListener('pointerdown', resumeOnce); };
       document.addEventListener('pointerdown', resumeOnce, { once: true });
-    } else {
-      fire();
-    }
+    });
   } catch(e) {}
 }
 playStationBell();
@@ -7554,7 +8162,7 @@ function updateChargingEstimate(){
   const timeStr = h > 0 ? `${h}j ${m}m` : `${m}m`;
   const msg = socNow >= 100 ? `Penuh ✓` : `~${timeStr} lagi penuh · ${Math.round(powerW)}W`;
   if(el && txt){ txt.textContent = msg; el.style.display = 'flex'; }
-  if(el2 && txt2){ txt2.textContent = msg; el2.style.display = 'block'; }
+  if(el2 && txt2){ txt2.textContent = msg; el2.style.display = 'flex'; }
 }
 
 // ── SMOOTH BEZIER (Catmull-Rom spline) ──
@@ -7598,10 +8206,18 @@ function exportTripCsv(){
     ]);
   });
   const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'\"')}"`) .join(',')).join('\n');
+  const fname = `gesits_trips_${new Date().toISOString().slice(0,10)}.csv`;
+
+  if(IS_NATIVE_ANDROID){
+    try{ Android.exportFile(fname, csv, 'text/csv'); }
+    catch(e){ showToast('Export gagal: '+e.message); }
+    return;
+  }
+
   const blob = new Blob([csv], {type:'text/csv'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url; a.download = `gesits_trips_${new Date().toISOString().slice(0,10)}.csv`;
+  a.href = url; a.download = fname;
   a.click(); URL.revokeObjectURL(url);
 }
 
@@ -7753,7 +8369,9 @@ function updateVoiceToggleUI(){
 }
 
 function toggleVoiceReadout(){
-  if(!window.speechSynthesis){
+  // Di Android native, TTS selalu tersedia via Java bridge
+  // Di browser, cek Web SpeechSynthesis
+  if(!IS_NATIVE_ANDROID && !window.speechSynthesis){
     showToast('Browser tidak mendukung Web Speech API');
     return;
   }
@@ -7766,7 +8384,7 @@ function toggleVoiceReadout(){
   } else {
     clearTimeout(_voiceTimer);
     _voiceTimer = null;
-    window.speechSynthesis.cancel();
+    stopSpeak();
     showToast('🔇 Voice readout nonaktif');
   }
 }
@@ -7779,23 +8397,17 @@ function scheduleVoice(){
 }
 
 function speakStatus(){
-  if(!_voiceEnabled || !isConnected || !window.speechSynthesis) return;
-  if((motoData.spd||0) < 3) return; // only when actually riding
-  window.speechSynthesis.cancel();
-  const items  = (localStorage.getItem('voice_items')||'speed,soc,range').split(',');
-  const parts  = [];
-  if(items.includes('speed') && motoData.spd!=null) parts.push(`Kecepatan ${motoData.spd} kilo per jam`);
-  if(items.includes('soc')   && motoData.soc!=null)  parts.push(`Baterai ${motoData.soc} persen`);
-  if(items.includes('range') && motoData.range!=null) parts.push(`Sisa jarak ${Math.round(motoData.range)} kilo`);
-  if(items.includes('trip')  && motoData.trip!=null)  parts.push(`Trip ${motoData.trip.toFixed(1)} kilo`);
+  if(!_voiceEnabled || !isConnected) return;
+  if((motoData.spd||0) < 3) return; // hanya saat berkendara
+  const items = (localStorage.getItem('voice_items')||'speed,soc,range').split(',');
+  const parts = [];
+  if(items.includes('speed') && motoData.spd!=null)   parts.push(`Kecepatan ${motoData.spd} kilo per jam`);
+  if(items.includes('soc')   && motoData.soc!=null)   parts.push(`Baterai ${motoData.soc} persen`);
+  if(items.includes('range') && motoData.range!=null)  parts.push(`Sisa jarak ${Math.round(motoData.range)} kilo`);
+  if(items.includes('trip')  && motoData.trip!=null)   parts.push(`Trip ${motoData.trip.toFixed(1)} kilo`);
   if(!parts.length) return;
-  const utt  = new SpeechSynthesisUtterance(parts.join('. '));
-  utt.lang   = 'id-ID';
-  utt.rate   = 1.0;
-  utt.pitch  = 1.0;
-  utt.volume = 1.0;
-  window.speechSynthesis.speak(utt);
-}
+  speakText(parts.join('. '));
+} // [FIX5] tutup speakStatus — sebelumnya hilang sehingga monitorIdleDrain ikut masuk ke dalam scope-nya
 
 // ════════════════════════════════════════
 // ── IDLE DRAIN ALERT ──
