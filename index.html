@@ -968,6 +968,24 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .rlo-unlock-btn circle.prog{fill:none;stroke:var(--green);stroke-width:4;stroke-linecap:round;stroke-dasharray:201;stroke-dashoffset:201;transition:stroke-dashoffset .05s linear}
 .rlo-unlock-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px}
 
+/* ── COROS-STYLE TRIP TELEMETRY CHART ── */
+.telem-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:0 14px 12px;overflow:hidden}
+.telem-header{padding:12px 14px 0;display:flex;align-items:center;justify-content:space-between}
+.telem-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.telem-tabs{display:flex;gap:4px;padding:10px 14px 0}
+.telem-tab{flex:1;text-align:center;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;color:var(--muted);background:var(--card2);border:1px solid var(--border);transition:all .18s;letter-spacing:.2px}
+.telem-tab.active{color:#000;border-color:transparent}
+.telem-chart-wrap{position:relative;height:130px;margin:10px 14px 0}
+.telem-canvas{width:100%;height:100%;display:block}
+.telem-crosshair{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.25);pointer-events:none;display:none}
+.telem-tooltip{position:absolute;top:4px;background:rgba(20,26,38,.92);border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:600;color:var(--text);pointer-events:none;display:none;white-space:nowrap;backdrop-filter:blur(6px)}
+.telem-axis-x{display:flex;justify-content:space-between;padding:4px 14px 12px;font-size:9px;color:var(--muted)}
+.telem-summary{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border)}
+.telem-sum-item{padding:10px 0;text-align:center;border-right:1px solid var(--border)}
+.telem-sum-item:last-child{border-right:none}
+.telem-sum-val{font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;line-height:1}
+.telem-sum-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.telem-no-data{display:flex;flex-direction:column;align-items:center;justify-content:center;height:130px;gap:6px;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
@@ -1707,6 +1725,31 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <div class="chart-bg" style="height:140px"><canvas id="statsEffChart" style="width:100%;height:100%;display:block"></canvas></div>
   </div>
 
+  <!-- CHART: TELEMETRI TRIP TERAKHIR (COROS-STYLE) -->
+  <div class="telem-card" id="telemCard">
+    <div class="telem-header">
+      <div class="telem-title">📈 Telemetri Trip Terakhir</div>
+      <div id="telemTripDate" style="font-size:10px;color:var(--muted)"></div>
+    </div>
+    <div class="telem-tabs">
+      <div class="telem-tab active" id="ttab-spd" onclick="switchTelemTab('spd')">Kecepatan</div>
+      <div class="telem-tab" id="ttab-pwr" onclick="switchTelemTab('pwr')">Daya</div>
+      <div class="telem-tab" id="ttab-regen" onclick="switchTelemTab('regen')">Regen</div>
+      <div class="telem-tab" id="ttab-soc" onclick="switchTelemTab('soc')">SOC</div>
+    </div>
+    <div class="telem-chart-wrap" id="telemChartWrap">
+      <canvas class="telem-canvas" id="telemCanvas"></canvas>
+      <div class="telem-crosshair" id="telemCrosshair"></div>
+      <div class="telem-tooltip" id="telemTooltip"></div>
+      <div class="telem-no-data" id="telemNoData" style="display:none">
+        <div style="font-size:26px">📊</div>
+        <div>Data telemetri belum tersedia.<br>Mulai trip lalu reset untuk merekam.</div>
+      </div>
+    </div>
+    <div class="telem-axis-x" id="telemAxisX"></div>
+    <div class="telem-summary" id="telemSummary"></div>
+  </div>
+
   <!-- HEATMAP RUTE FAVORIT -->
   <div style="padding:0 14px 12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -2048,7 +2091,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     <h3>⚙️ Pengaturan</h3>
     <div style="font-size:13px;font-weight:600;margin-bottom:8px">🗺️ Sumber Peta</div>
     <div class="preset-row" id="providerBtns" style="margin-bottom:8px">
-      <button type="button" class="preset-btn" id="provBtnMapbox" onclick="pickProvider('mapbox')" style="display:none">Mapbox</button>
+      <button type="button" class="preset-btn" id="provBtnMapbox" onclick="pickProvider('mapbox')">Mapbox</button>
       <button type="button" class="preset-btn" id="provBtnOsm" onclick="pickProvider('osm')">OSM (Gratis)</button>
       <button type="button" class="preset-btn" id="provBtnMaptiler" onclick="pickProvider('maptiler')">MapTiler</button>
     </div>
@@ -2201,12 +2244,6 @@ const IS_NATIVE_ANDROID = (typeof Android !== 'undefined');
 // ═══════════════════════════════════════════
 let MAPBOX_TOKEN = localStorage.getItem('mapbox_tk') || '';
 let MAP_PROVIDER = localStorage.getItem('map_provider') || 'mapbox'; // 'mapbox' | 'osm' | 'maptiler'
-// Di Android native, Mapbox GL JS tidak render dengan benar di WebView
-// Paksa OSM kalau provider-nya Mapbox
-if(IS_NATIVE_ANDROID && MAP_PROVIDER === 'mapbox'){
-  MAP_PROVIDER = 'osm';
-  localStorage.setItem('map_provider', 'osm');
-}
 let MAPTILER_KEY = localStorage.getItem('maptiler_key') || '';
 let BATTERY_CAPACITY_AH = parseFloat(localStorage.getItem('batt_capacity_ah')) || 20;
 let BATTERY_NOMINAL_V   = parseFloat(localStorage.getItem('batt_nominal_v'))   || 72;
@@ -3556,6 +3593,228 @@ function applyTripBaselineReset(){
   renderEfficiencyTrend();
   calcFuelSavings();
   updateLivePowerSummary();
+  // Reset telemetri buffer trip baru
+  _telemBuffer = [];
+  localStorage.removeItem('trip_telem');
+}
+
+// ══════════════════════════════════════════════════════════
+// ── TELEMETRI TRIP (logging per-2-detik, Coros-style) ──
+// ══════════════════════════════════════════════════════════
+let _telemBuffer = (()=>{ try{ return JSON.parse(localStorage.getItem('trip_telem')||'[]'); }catch(e){ return []; } })();
+let _telemTimer = null;
+const TELEM_INTERVAL_MS = 2000; // 2 detik
+const TELEM_MAX_POINTS  = 3600; // maks 2 jam
+
+function startTelemLogger(){
+  if(_telemTimer) return;
+  _telemTimer = setInterval(()=>{
+    if(!isConnected || motoData.spd < 1) return; // hanya catat saat bergerak
+    const pw = (motoData.vbat && motoData.ibat != null) ? motoData.vbat * motoData.ibat : 0;
+    const isRegen = pw < 0;
+    _telemBuffer.push([
+      Math.round(Date.now()/1000), // ts (epoch detik, hemat space)
+      Math.round(motoData.spd),    // kecepatan km/h
+      isRegen ? 0 : Math.round(Math.abs(pw)), // daya W
+      isRegen ? Math.round(Math.abs(pw)) : 0, // regen W
+      motoData.soc ?? 0            // SOC %
+    ]);
+    if(_telemBuffer.length > TELEM_MAX_POINTS) _telemBuffer.splice(0, _telemBuffer.length - TELEM_MAX_POINTS);
+    // Simpan ke localStorage setiap 10 sampel
+    if(_telemBuffer.length % 10 === 0){
+      try{ localStorage.setItem('trip_telem', JSON.stringify(_telemBuffer)); }catch(e){}
+    }
+  }, TELEM_INTERVAL_MS);
+}
+function stopTelemLogger(){
+  if(_telemTimer){ clearInterval(_telemTimer); _telemTimer = null; }
+}
+
+// ── Grafik Coros-style ──
+let _telemActiveTab = 'spd';
+let _telemData = null; // data trip terakhir yang ditampilkan
+
+const TELEM_CFG = {
+  spd:  { label:'Kecepatan', unit:'km/h', color:'#00e676', gradTop:'rgba(0,230,118,.35)', gradBot:'rgba(0,230,118,.03)', idx:1, sumKeys:['Max','Avg','Min'], sumFn:(d)=>{
+    const vals=d.map(r=>r[1]); const max=Math.max(...vals), avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const min=Math.min(...vals.filter(v=>v>0));
+    return [{v:max+' km/h',l:'Maks'},{v:Math.round(avg)+' km/h',l:'Rata²'},{v:(min||0)+' km/h',l:'Min'}];
+  }},
+  pwr:  { label:'Daya', unit:'W', color:'#ff7043', gradTop:'rgba(255,112,67,.35)', gradBot:'rgba(255,112,67,.03)', idx:2, sumFn:(d)=>{
+    const vals=d.map(r=>r[2]); const max=Math.max(...vals), avg=vals.filter(v=>v>0).reduce((a,b)=>a+b,0)/Math.max(1,vals.filter(v=>v>0).length);
+    return [{v:max+'W',l:'Maks'},{v:Math.round(avg)+'W',l:'Rata²'},{v:Math.round(vals.filter(v=>v>0).length*2/60)+' min',l:'Aktif'}];
+  }},
+  regen:{ label:'Regen', unit:'W', color:'#00bcd4', gradTop:'rgba(0,188,212,.35)', gradBot:'rgba(0,188,212,.03)', idx:3, sumFn:(d)=>{
+    const vals=d.map(r=>r[3]); const max=Math.max(...vals), totalWh=vals.reduce((a,b)=>a+b,0)*2/3600;
+    const events=vals.filter(v=>v>0).length;
+    return [{v:max+'W',l:'Maks'},{v:totalWh.toFixed(1)+' Wh',l:'Total'},{v:events+'x',l:'Event'}];
+  }},
+  soc:  { label:'SOC', unit:'%', color:'#ffa726', gradTop:'rgba(255,167,38,.35)', gradBot:'rgba(255,167,38,.03)', idx:4, sumFn:(d)=>{
+    const start=d[0][4], end=d[d.length-1][4], drop=Math.max(0,start-end);
+    return [{v:start+'%',l:'Awal'},{v:end+'%',l:'Akhir'},{v:'-'+drop+'%',l:'Turun'}];
+  }},
+};
+
+function switchTelemTab(tab){
+  _telemActiveTab = tab;
+  Object.keys(TELEM_CFG).forEach(k=>{
+    const el=document.getElementById('ttab-'+k);
+    if(el){ el.classList.toggle('active', k===tab); el.style.background=k===tab?TELEM_CFG[k].color:''; }
+  });
+  renderTelemChart();
+}
+
+function renderTelemChart(){
+  const canvas = document.getElementById('telemCanvas');
+  const noData = document.getElementById('telemNoData');
+  const wrap   = document.getElementById('telemChartWrap');
+  if(!canvas) return;
+
+  // Ambil data: prioritas trip tersimpan terakhir, fallback ke buffer aktif
+  const hist = getTripHistory();
+  let data = null;
+  let tripDate = '';
+  if(hist.length && hist[0].telem && hist[0].telem.length > 2){
+    data = hist[0].telem;
+    const d = new Date(hist[0].date);
+    tripDate = d.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  } else if(_telemBuffer.length > 2){
+    data = _telemBuffer;
+    tripDate = 'Trip berjalan';
+  }
+
+  const dateEl = document.getElementById('telemTripDate');
+  if(dateEl) dateEl.textContent = tripDate;
+
+  if(!data || data.length < 2){
+    canvas.style.display = 'none';
+    noData.style.display = 'flex';
+    document.getElementById('telemAxisX').innerHTML = '';
+    document.getElementById('telemSummary').innerHTML = '';
+    return;
+  }
+  canvas.style.display = 'block';
+  noData.style.display = 'none';
+
+  _telemData = data;
+  const cfg = TELEM_CFG[_telemActiveTab];
+  const vals = data.map(r => r[cfg.idx]);
+
+  // Downsample ke maks 200 titik untuk performa
+  const ds = downsampleTelem(vals, 200);
+
+  const W = canvas.offsetWidth || 300;
+  const H = canvas.offsetHeight || 130;
+  canvas.width  = W * (window.devicePixelRatio||1);
+  canvas.height = H * (window.devicePixelRatio||1);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+
+  const maxV = Math.max(...ds, 1);
+  const PAD = { top:10, right:8, bottom:4, left:34 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+
+  const xOf = i => PAD.left + (i/(ds.length-1)) * cW;
+  const yOf = v => PAD.top  + cH - (v/maxV) * cH;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';
+  ctx.lineWidth   = 1;
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const y = PAD.top + cH*(1-f);
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(PAD.left+cW,y); ctx.stroke();
+    // Y-axis label
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.font = `${9*(window.devicePixelRatio||1)/1}px Inter, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxV*f), PAD.left-4, y+3);
+  });
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top+cH);
+  grad.addColorStop(0,   cfg.gradTop);
+  grad.addColorStop(1,   cfg.gradBot);
+  ctx.beginPath();
+  ctx.moveTo(xOf(0), yOf(ds[0]));
+  ds.forEach((v,i)=>{ if(i>0) ctx.lineTo(xOf(i), yOf(v)); });
+  ctx.lineTo(xOf(ds.length-1), PAD.top+cH);
+  ctx.lineTo(xOf(0), PAD.top+cH);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(xOf(0), yOf(ds[0]));
+  ds.forEach((v,i)=>{ if(i>0) ctx.lineTo(xOf(i), yOf(v)); });
+  ctx.strokeStyle = cfg.color;
+  ctx.lineWidth   = 2;
+  ctx.lineJoin    = 'round';
+  ctx.stroke();
+
+  // Summary cards
+  const sumItems = cfg.sumFn(data);
+  document.getElementById('telemSummary').innerHTML = sumItems.map(s=>
+    `<div class="telem-sum-item"><div class="telem-sum-val" style="color:${cfg.color}">${s.v}</div><div class="telem-sum-lbl">${s.l}</div></div>`
+  ).join('');
+
+  // X-axis labels (waktu / jarak)
+  const totalSec = (data[data.length-1][0] - data[0][0]);
+  const fmtMin = s => { const m=Math.floor(s/60); return m+'m'; };
+  const axLabels = [fmtMin(0), fmtMin(totalSec*0.25), fmtMin(totalSec*0.5), fmtMin(totalSec*0.75), fmtMin(totalSec)];
+  document.getElementById('telemAxisX').innerHTML = axLabels.map(l=>`<span>${l}</span>`).join('');
+
+  // Touch/mouse interaction (crosshair + tooltip)
+  setupTelemInteraction(canvas, ds, data, cfg, xOf, yOf, PAD, cW, maxV, W, H);
+}
+
+function downsampleTelem(arr, maxPts){
+  if(arr.length <= maxPts) return arr.slice();
+  const out = [], step = arr.length / maxPts;
+  for(let i=0;i<maxPts;i++) out.push(arr[Math.floor(i*step)]);
+  return out;
+}
+
+function setupTelemInteraction(canvas, ds, rawData, cfg, xOf, yOf, PAD, cW, maxV, W, H){
+  const crosshair = document.getElementById('telemCrosshair');
+  const tooltip   = document.getElementById('telemTooltip');
+  const wrap      = document.getElementById('telemChartWrap');
+
+  function onMove(clientX){
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const idx = Math.max(0, Math.min(ds.length-1, Math.round((x - PAD.left)/cW*(ds.length-1))));
+    const val = ds[idx];
+    const px  = xOf(idx);
+    if(crosshair){ crosshair.style.display='block'; crosshair.style.left=px+'px'; }
+    if(tooltip){
+      tooltip.style.display='block';
+      tooltip.textContent = `${val} ${cfg.unit}`;
+      const tl = Math.min(px+8, W - 90);
+      tooltip.style.left = tl + 'px';
+    }
+  }
+  function onEnd(){
+    if(crosshair) crosshair.style.display='none';
+    if(tooltip)   tooltip.style.display='none';
+  }
+
+  // Remove old listeners by cloning node
+  const newCanvas = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas, canvas);
+  newCanvas.addEventListener('mousemove', e => onMove(e.clientX));
+  newCanvas.addEventListener('mouseleave', onEnd);
+  newCanvas.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientX); }, {passive:false});
+  newCanvas.addEventListener('touchend',   onEnd);
+}
+
+// Init tab warna saat load
+function initTelemTabColors(){
+  Object.keys(TELEM_CFG).forEach(k=>{
+    const el=document.getElementById('ttab-'+k);
+    if(el && k===_telemActiveTab) el.style.background=TELEM_CFG[k].color;
+  });
 }
 
 function openResetTripModal(){
@@ -3600,6 +3859,7 @@ function resetTrip(){
       ridingScore: calcFinalRidingScore(),
       costIDR: calcTripCost(finalEnergy),
       path: simplifyPath(tripPath),
+      telem: _telemBuffer.slice(), // simpan snapshot telemetri
     });
     resetRidingScore();
     justSavedTrip = true;
@@ -4128,12 +4388,14 @@ function startPolling(){
   startTripRangeSender();
   startDashRotation();
   startMapsStream(); // AT+MAPS jalan terus selama koneksi aktif
+  startTelemLogger(); // rekam telemetri trip
 }
 function stopPolling(){
   if(pollTimer){clearInterval(pollTimer);pollTimer=null;} pollIdx=0;
   stopTripRangeSender();
   stopDashRotation();
   stopMapsStream(); // hentikan AT+MAPS
+  stopTelemLogger(); // hentikan rekam telemetri
 }
 
 // ── AT+MAPS STREAM ──
@@ -6262,7 +6524,9 @@ function pickProvider(p){
   document.getElementById('maptilerKeyWrap').style.display = p==='maptiler' ? 'block' : 'none';
   const hints = {
     osm:      '💡 OSM: 100% gratis tanpa token — mode malam pakai tile CARTO, satelit pakai Esri.',
-    mapbox:   '💡 Mapbox: peta vektor berkualitas tinggi, butuh token (ada kuota gratis bulanan).',
+    mapbox:   IS_NATIVE_ANDROID
+      ? '⚠️ Mapbox mungkin tidak render di Android native WebView. Gunakan OSM atau MapTiler untuk hasil terbaik di app.'
+      : '💡 Mapbox: peta vektor berkualitas tinggi, butuh token (ada kuota gratis bulanan).',
     maptiler: '💡 MapTiler: peta vektor jernih & terbaca, mirip referensi. Daftar gratis di maptiler.com (100K tiles/bulan).',
   };
   document.getElementById('providerHint').textContent = hints[p] || '';
@@ -7531,6 +7795,8 @@ function renderStatsPage(){
     const tealRgba  = 'rgba(0,188,212,0.12)';
     drawStatsChart('statsKmChart',  days, kmByDay,  'var(--green)', greenRgba);
     drawStatsChart('statsEffChart', days, effByDay, 'var(--teal)',  tealRgba);
+    initTelemTabColors();
+    renderTelemChart();
   }, 60);
 
   // Gamifikasi
