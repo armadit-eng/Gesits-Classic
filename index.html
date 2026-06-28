@@ -58,7 +58,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .bt-btn.connected{color:var(--green);border-color:var(--green)}
 
 /* ── TABS ── */
-.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
 .tab{flex:1;text-align:center;padding:10px 0 9px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
 .tab.active{color:var(--green);border-bottom-color:var(--green)}
 
@@ -289,7 +289,7 @@ body.light .ble-log{box-shadow:none}
   transition:background .15s, bottom .2s;
 }
 .map-recenter-btn:hover{background:var(--card2)}
-.map-recenter-btn.nav-active{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.map-recenter-btn.nav-active{bottom:150px}
 
 /* Destination panel */
 .dest-panel{
@@ -370,9 +370,7 @@ body.light .ble-log{box-shadow:none}
 
 /* Route bar (navigasi aktif) */
 .route-bar{
-  position:absolute;left:10px;right:10px;
-  bottom:calc(68px + env(safe-area-inset-bottom,0px));
-  z-index:10;
+  position:absolute;left:10px;right:10px;bottom:68px;z-index:10;
   background:rgba(13,17,23,0.96);border:1px solid rgba(0,230,118,.35);
   border-radius:18px;padding:0;
   display:flex;align-items:stretch;gap:0;overflow:hidden;
@@ -419,8 +417,7 @@ body.light .ble-log{box-shadow:none}
   display:flex;align-items:center;gap:0;padding:0;
   background:rgba(13,17,23,0.96);border-top:1px solid var(--border);
   backdrop-filter:blur(12px);flex-shrink:0;position:relative;z-index:10;
-  height:calc(56px + env(safe-area-inset-bottom,0px));
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  height:56px;
 }
 /* Tombol BLE/Dashboard — kiri */
 .nav-ctrl-btn{
@@ -896,10 +893,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .savings-note{font-size:10px;color:var(--muted);text-align:center;margin-top:4px}
 
 /* ── VOICE READOUT ── */
-.voice-toggle{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--card2);color:var(--muted);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;margin-top:2px}
-.voice-toggle.on{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.4);color:#00d4ff}
-.voice-toggle .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .2s}
-.voice-toggle.on .dot{background:#00d4ff;animation:voicePulse 1.2s ease-in-out infinite}
+
 @keyframes voicePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 
 /* ── WEEKLY GOAL ── */
@@ -935,14 +929,14 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .eff-trend.flat{background:rgba(255,255,255,.06);color:var(--muted)}
 
 /* ── RIDE LOCK + MAP ACTION BUTTONS ── */
-.ride-lock-fab{position:absolute;bottom:calc(166px + env(safe-area-inset-bottom,0px));right:10px;width:40px;height:40px;border-radius:10px;background:rgba(13,17,23,0.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:20;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s,bottom .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.ride-lock-fab{position:absolute;bottom:166px;right:10px;width:40px;height:40px;border-radius:10px;background:rgba(13,17,23,0.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:20;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s,bottom .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)}
 .ride-lock-fab:active{background:rgba(0,0,0,.8)}
-.ride-lock-fab.nav-active{bottom:calc(250px + env(safe-area-inset-bottom,0px))}
+.ride-lock-fab.nav-active{bottom:250px}
 
 /* Preview rute (zoom out seluruh rute) */
-.map-preview-btn{position:absolute;right:10px;bottom:calc(116px + env(safe-area-inset-bottom,0px));z-index:20;background:rgba(13,17,23,0.9);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:background .15s,bottom .2s;font-size:16px}
+.map-preview-btn{position:absolute;right:10px;bottom:116px;z-index:20;background:rgba(13,17,23,0.9);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:background .15s,bottom .2s;font-size:16px}
 .map-preview-btn:hover{background:var(--card2)}
-.map-preview-btn.nav-active{bottom:calc(200px + env(safe-area-inset-bottom,0px))}
+.map-preview-btn.nav-active{bottom:200px}
 
 /* Fullscreen lock overlay */
 #rideLockOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:space-between;padding:48px 24px 52px;user-select:none;-webkit-user-select:none}
@@ -983,9 +977,9 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
 .telem-summary{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border)}
 .telem-sum-item{padding:10px 0;text-align:center;border-right:1px solid var(--border)}
 .telem-sum-item:last-child{border-right:none}
-.telem-sum-val{font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;line-height:1}
+.telem-sum-val{font-family:"Rajdhani",sans-serif;font-size:18px;font-weight:700;line-height:1}
 .telem-sum-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
-.telem-no-data{display:flex;flex-direction:column;align-items:center;justify-content:center;height:130px;gap:6px;color:var(--muted);font-size:12px}
+.telem-no-data{display:flex;flex-direction:column;align-items:center;justify-content:center;height:130px;gap:6px;color:var(--muted);font-size:12px;text-align:center;padding:0 20px}
 </style>
 </head>
 <body>
@@ -1056,10 +1050,6 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <span id="hwwMood">—</span>
       </div>
       <div id="hwwDetail" style="display:none"></div><!-- tetap ada untuk JS compatibility -->
-      <!-- Voice readout toggle -->
-      <div id="voiceToggleBtn" class="voice-toggle" onclick="toggleVoiceReadout()" title="Bacaan suara saat berkendara">
-        <span class="dot"></span><span id="voiceToggleTxt">SUARA OFF</span>
-      </div>
     </div>
   </div>
 
@@ -1737,13 +1727,13 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="telem-tab" id="ttab-regen" onclick="switchTelemTab('regen')">Regen</div>
       <div class="telem-tab" id="ttab-soc" onclick="switchTelemTab('soc')">SOC</div>
     </div>
-    <div class="telem-chart-wrap" id="telemChartWrap">
-      <canvas class="telem-canvas" id="telemCanvas"></canvas>
+    <div class="telem-chart-wrap" style="height:130px">
+      <canvas class="telem-canvas" id="telemCanvas" style="width:100%;height:130px;display:block"></canvas>
       <div class="telem-crosshair" id="telemCrosshair"></div>
       <div class="telem-tooltip" id="telemTooltip"></div>
       <div class="telem-no-data" id="telemNoData" style="display:none">
         <div style="font-size:26px">📊</div>
-        <div>Data telemetri belum tersedia.<br>Mulai trip lalu reset untuk merekam.</div>
+        <div>Belum ada data telemetri.<br>Mulai trip lalu reset untuk merekam.</div>
       </div>
     </div>
     <div class="telem-axis-x" id="telemAxisX"></div>
@@ -1917,6 +1907,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
   </div>
   <div class="story-footer">
     <button class="story-btn-close" onclick="closeStory()">Tutup</button>
+    <button class="story-btn-share" style="background:#1a73e8" onclick="saveStoryTripPng()">💾 Simpan</button>
     <button class="story-btn-share" onclick="shareStoryTrip()">📤 Bagikan</button>
   </div>
 </div>
@@ -2073,6 +2064,18 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
   </div>
 </div>
 
+<!-- MODAL: AUTO-CONNECT TIMEOUT 15 DETIK -->
+<div class="modal-overlay" id="autoConnectTimeoutModal">
+  <div class="modal">
+    <h3>📡 Tidak Dapat Terhubung</h3>
+    <p>Motor tidak terdeteksi selama <strong>15 detik</strong>. Ingin terus mencoba atau berhenti?</p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal('autoConnectTimeoutModal');stopAutoConnectTimeout()">BERHENTI</button>
+      <button class="modal-btn" onclick="closeModal('autoConnectTimeoutModal');retryAutoConnect()">COBA LAGI</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: RESET TRIP CONFIRM -->
 <div class="modal-overlay" id="resetTripModal">
   <div class="modal">
@@ -2173,25 +2176,14 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <label class="dash-switch"><input type="checkbox" id="dashTogCo2"><span class="dash-switch-track"></span></label>
       </div>
       <div class="dash-toggle-row">
-        <span class="dash-toggle-label">🌤️ Cuaca</span>
-        <label class="dash-switch"><input type="checkbox" id="dashTogWeather"><span class="dash-switch-track"></span></label>
+        <span class="dash-toggle-label">🌤️ Saran Cuaca Rider</span>
+        <label class="dash-switch"><input type="checkbox" id="dashTogCuaca"><span class="dash-switch-track"></span></label>
       </div>
     </div>
+    <div class="uuid-tip" style="margin-bottom:10px">💡 Teks cuaca &gt;20 karakter otomatis dipecah jadi 2 slot rotasi, potong di batas kata.</div>
     <div class="uuid-field">
       <label>Interval Pergantian (detik)</label>
       <input id="inDashRotateSec" type="number" step="1" min="2" max="60" inputmode="numeric" placeholder="5">
-    </div>
-    <hr class="modal-sep">
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎙️ Voice Readout</div>
-    <div class="uuid-field">
-      <label>Interval Bacaan (menit)</label>
-      <input id="inVoiceInterval" type="number" inputmode="numeric" min="1" max="60" placeholder="10" value="10">
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceSpd" checked> Kecepatan</label>
-      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceSoc" checked> SOC</label>
-      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceRange" checked> Range</label>
-      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="voiceTrip"> Jarak Trip</label>
     </div>
     <hr class="modal-sep">
     <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🔔 Idle Alert</div>
@@ -2244,6 +2236,8 @@ const IS_NATIVE_ANDROID = (typeof Android !== 'undefined');
 // ═══════════════════════════════════════════
 let MAPBOX_TOKEN = localStorage.getItem('mapbox_tk') || '';
 let MAP_PROVIDER = localStorage.getItem('map_provider') || 'mapbox'; // 'mapbox' | 'osm' | 'maptiler'
+// Di Android native, Mapbox GL JS mungkin tidak render optimal di WebView
+// User tetap bisa memilih, tapi akan ada peringatan di settings
 let MAPTILER_KEY = localStorage.getItem('maptiler_key') || '';
 let BATTERY_CAPACITY_AH = parseFloat(localStorage.getItem('batt_capacity_ah')) || 20;
 let BATTERY_NOMINAL_V   = parseFloat(localStorage.getItem('batt_nominal_v'))   || 72;
@@ -2256,11 +2250,27 @@ let SNAP_H = parseInt(localStorage.getItem('snap_h')) || 220;
 
 // ── DASHBOARD ROTATION (AT+NAV multi-data) ──
 let DASH_ROTATE_SEC = parseInt(localStorage.getItem('dash_rotate_sec')) || 5;
-let _navWeatherStr  = null; // string cuaca singkat untuk rotasi AT+NAV
 let DASH_TOGGLES = (()=>{
-  try{ return JSON.parse(localStorage.getItem('dash_toggles')) || {range:true, trip:true, energi:false, efisiensi:false, co2:false, weather:false}; }
-  catch(e){ return {range:true, trip:true, energi:false, efisiensi:false, co2:false, weather:false}; }
+  try{ return JSON.parse(localStorage.getItem('dash_toggles')) || {range:true, trip:true, energi:false, efisiensi:false, co2:false, cuaca:false}; }
+  catch(e){ return {range:true, trip:true, energi:false, efisiensi:false, co2:false, cuaca:false}; }
 })();
+
+// Mood cuaca terakhir (set oleh fetchHomeWeather) — dikirim ke AT+NAV kalau toggle cuaca aktif
+let _weatherMoodText = '';
+
+// Split teks AT+NAV di batas kata, maks 20 char per bagian (maks 2 bagian)
+function splitNavText(text){
+  text = (text||'').trim();
+  if(!text) return [];
+  if(text.length <= 20) return [text];
+  // Cari spasi terdekat ≤ posisi 20 (potong di batas kata, bukan di tengah)
+  let cut = 20;
+  while(cut > 0 && text[cut] !== ' ') cut--;
+  if(cut === 0) cut = 20; // tidak ada spasi dalam 20 char → potong paksa
+  const part1 = text.slice(0, cut).trim();
+  const part2 = text.slice(cut).trim().slice(0, 20); // bagian kedua maks 20 char juga
+  return part2 ? [part1, part2] : [part1];
+}
 
 // ═══════════════════════════════════════════
 // ANDROID NATIVE BRIDGE CALLBACKS
@@ -2338,14 +2348,47 @@ window.onBtReconnected = function() {
 };
 
 // ── Dipanggil Java: sedang auto-connect saat app dibuka ──
+let _autoConnectTimeoutTimer = null;
 window.onAutoConnecting = function(mac) {
   setBtState('connecting');
   log('🔄 Auto-connect ke ' + mac + '...','sys');
+
+  // Batas 15 detik: kalau belum connected, tampilkan dialog
+  clearTimeout(_autoConnectTimeoutTimer);
+  _autoConnectTimeoutTimer = setTimeout(()=>{
+    if(!isConnected){
+      document.getElementById('autoConnectTimeoutModal').classList.add('show');
+    }
+  }, 15000);
 };
+
+function stopAutoConnectTimeout(){
+  clearTimeout(_autoConnectTimeoutTimer);
+  _autoConnectTimeoutTimer = null;
+  // Berhenti mencoba — kembalikan state ke disconnected
+  if(!isConnected){
+    setBtState('disconnected');
+    try{ Android.cancelConnect(); }catch(e){}
+  }
+}
+
+function retryAutoConnect(){
+  clearTimeout(_autoConnectTimeoutTimer);
+  // Minta Java coba connect ulang
+  try{ Android.reconnect(); }catch(e){ connectBLE(); }
+  // Set timeout baru
+  _autoConnectTimeoutTimer = setTimeout(()=>{
+    if(!isConnected){
+      document.getElementById('autoConnectTimeoutModal').classList.add('show');
+    }
+  }, 15000);
+}
 
 // ── Dipanggil Java: auto-connect berhasil saat app dibuka ──
 window.onBtAutoConnected = function() {
   if(isConnected) return;
+  clearTimeout(_autoConnectTimeoutTimer);
+  _autoConnectTimeoutTimer = null;
   isConnected           = true;
   wasManualDisconnect   = false;
   odoCheckedThisSession = false;
@@ -2656,25 +2699,8 @@ async function fetchHomeWeather(force=false){
 
     document.getElementById('hwwIcon').textContent = moodIcon;
     document.getElementById('hwwMood').textContent = mood + ` · ${temp}°C 💨${wind}`;
-    // Simpan string informatif untuk rotasi AT+NAV (tanpa emoji, hanya teks)
-    // Pemetaan mood ke kalimat singkat tanpa tanda baca rumit, maks 40 karakter
-    let navWeatherMsg;
-    if(rain >= 70){
-      navWeatherMsg = 'Hujan bawa jas hujan';    // 20 char pas
-    } else if(wind >= 35){
-      navWeatherMsg = 'Angin kencang waspada';   // 21 -> P1: Angin kencang / P2: waspada
-    } else if(temp >= 36){
-      navWeatherMsg = 'Panas terik hidrasi';     // 19 char
-    } else if(rain >= 40){
-      navWeatherMsg = 'Hujan bawa jas hujan';    // 20 char pas
-    } else if(temp >= 30 && wind < 20 && rain < 30){
-      navWeatherMsg = 'Cerah riding aman';        // 17 char
-    } else if(temp < 22){
-      navWeatherMsg = 'Sejuk riding aman';        // 17 char
-    } else {
-      navWeatherMsg = 'Cerah riding aman';        // 17 char
-    }
-    _navWeatherStr = navWeatherMsg;
+    // Simpan mood teks bersih untuk AT+NAV (tanpa suhu/angin, tanpa emoji)
+    _weatherMoodText = mood.replace(/[—–]/g, '-'); // ganti em-dash ke ASCII
     const w = document.getElementById('homeWeatherWidget');
     if(w) w.style.display = 'flex';
   } catch(e){
@@ -3591,9 +3617,9 @@ function applyTripBaselineReset(){
   updateSmartAlert();
   updateMaintenanceCard();
   renderEfficiencyTrend();
-  calcFuelSavings();
+  renderFuelSavings();
   updateLivePowerSummary();
-  // Reset telemetri buffer trip baru
+  // Reset buffer telemetri untuk trip baru
   _telemBuffer = [];
   localStorage.removeItem('trip_telem');
 }
@@ -3602,78 +3628,73 @@ function applyTripBaselineReset(){
 // ── TELEMETRI TRIP (logging per-2-detik, Coros-style) ──
 // ══════════════════════════════════════════════════════════
 let _telemBuffer = (()=>{ try{ return JSON.parse(localStorage.getItem('trip_telem')||'[]'); }catch(e){ return []; } })();
-let _telemTimer = null;
-const TELEM_INTERVAL_MS = 2000; // 2 detik
-const TELEM_MAX_POINTS  = 3600; // maks 2 jam
+let _telemTimer  = null;
+let _telemActiveTab = 'spd';
 
 function startTelemLogger(){
   if(_telemTimer) return;
   _telemTimer = setInterval(()=>{
-    if(!isConnected || motoData.spd < 1) return; // hanya catat saat bergerak
+    if(!isConnected || motoData.spd < 1) return;
     const pw = (motoData.vbat && motoData.ibat != null) ? motoData.vbat * motoData.ibat : 0;
     const isRegen = pw < 0;
     _telemBuffer.push([
-      Math.round(Date.now()/1000), // ts (epoch detik, hemat space)
-      Math.round(motoData.spd),    // kecepatan km/h
-      isRegen ? 0 : Math.round(Math.abs(pw)), // daya W
-      isRegen ? Math.round(Math.abs(pw)) : 0, // regen W
-      motoData.soc ?? 0            // SOC %
+      Math.round(Date.now()/1000),            // [0] ts epoch detik
+      Math.round(motoData.spd),               // [1] kecepatan km/h
+      isRegen ? 0 : Math.round(Math.abs(pw)), // [2] daya W
+      isRegen ? Math.round(Math.abs(pw)) : 0, // [3] regen W
+      Math.round(motoData.soc ?? 0)           // [4] SOC %
     ]);
-    if(_telemBuffer.length > TELEM_MAX_POINTS) _telemBuffer.splice(0, _telemBuffer.length - TELEM_MAX_POINTS);
-    // Simpan ke localStorage setiap 10 sampel
+    if(_telemBuffer.length > 3600) _telemBuffer.splice(0, _telemBuffer.length - 3600);
     if(_telemBuffer.length % 10 === 0){
       try{ localStorage.setItem('trip_telem', JSON.stringify(_telemBuffer)); }catch(e){}
     }
-  }, TELEM_INTERVAL_MS);
+  }, 2000);
 }
 function stopTelemLogger(){
   if(_telemTimer){ clearInterval(_telemTimer); _telemTimer = null; }
 }
 
-// ── Grafik Coros-style ──
-let _telemActiveTab = 'spd';
-let _telemData = null; // data trip terakhir yang ditampilkan
-
 const TELEM_CFG = {
-  spd:  { label:'Kecepatan', unit:'km/h', color:'#00e676', gradTop:'rgba(0,230,118,.35)', gradBot:'rgba(0,230,118,.03)', idx:1, sumKeys:['Max','Avg','Min'], sumFn:(d)=>{
-    const vals=d.map(r=>r[1]); const max=Math.max(...vals), avg=vals.reduce((a,b)=>a+b,0)/vals.length;
-    const min=Math.min(...vals.filter(v=>v>0));
-    return [{v:max+' km/h',l:'Maks'},{v:Math.round(avg)+' km/h',l:'Rata²'},{v:(min||0)+' km/h',l:'Min'}];
-  }},
-  pwr:  { label:'Daya', unit:'W', color:'#ff7043', gradTop:'rgba(255,112,67,.35)', gradBot:'rgba(255,112,67,.03)', idx:2, sumFn:(d)=>{
-    const vals=d.map(r=>r[2]); const max=Math.max(...vals), avg=vals.filter(v=>v>0).reduce((a,b)=>a+b,0)/Math.max(1,vals.filter(v=>v>0).length);
-    return [{v:max+'W',l:'Maks'},{v:Math.round(avg)+'W',l:'Rata²'},{v:Math.round(vals.filter(v=>v>0).length*2/60)+' min',l:'Aktif'}];
-  }},
-  regen:{ label:'Regen', unit:'W', color:'#00bcd4', gradTop:'rgba(0,188,212,.35)', gradBot:'rgba(0,188,212,.03)', idx:3, sumFn:(d)=>{
-    const vals=d.map(r=>r[3]); const max=Math.max(...vals), totalWh=vals.reduce((a,b)=>a+b,0)*2/3600;
-    const events=vals.filter(v=>v>0).length;
-    return [{v:max+'W',l:'Maks'},{v:totalWh.toFixed(1)+' Wh',l:'Total'},{v:events+'x',l:'Event'}];
-  }},
-  soc:  { label:'SOC', unit:'%', color:'#ffa726', gradTop:'rgba(255,167,38,.35)', gradBot:'rgba(255,167,38,.03)', idx:4, sumFn:(d)=>{
-    const start=d[0][4], end=d[d.length-1][4], drop=Math.max(0,start-end);
-    return [{v:start+'%',l:'Awal'},{v:end+'%',l:'Akhir'},{v:'-'+drop+'%',l:'Turun'}];
-  }},
+  spd:  { label:'Kecepatan', unit:'km/h', color:'#00e676', gTop:'rgba(0,230,118,.35)',   gBot:'rgba(0,230,118,.03)',   idx:1,
+    sumFn:(d)=>{ const v=d.map(r=>r[1]),mx=Math.max(...v),av=v.reduce((a,b)=>a+b,0)/v.length,mn=Math.min(...v.filter(x=>x>0)||[0]);
+      return [{v:mx+' km/h',l:'Maks'},{v:Math.round(av)+' km/h',l:'Rata²'},{v:(mn||0)+' km/h',l:'Min'}]; }},
+  pwr:  { label:'Daya', unit:'W', color:'#ff7043', gTop:'rgba(255,112,67,.35)',  gBot:'rgba(255,112,67,.03)',   idx:2,
+    sumFn:(d)=>{ const v=d.map(r=>r[2]),mx=Math.max(...v,0),ac=v.filter(x=>x>0),av=ac.length?ac.reduce((a,b)=>a+b,0)/ac.length:0;
+      return [{v:mx+'W',l:'Maks'},{v:Math.round(av)+'W',l:'Rata²'},{v:Math.round(ac.length*2/60)+' min',l:'Aktif'}]; }},
+  regen:{ label:'Regen', unit:'W', color:'#00bcd4', gTop:'rgba(0,188,212,.35)',   gBot:'rgba(0,188,212,.03)',   idx:3,
+    sumFn:(d)=>{ const v=d.map(r=>r[3]),mx=Math.max(...v,0),total=(v.reduce((a,b)=>a+b,0)*2/3600).toFixed(1);
+      return [{v:mx+'W',l:'Maks'},{v:total+' Wh',l:'Total'},{v:v.filter(x=>x>0).length+'x',l:'Event'}]; }},
+  soc:  { label:'SOC', unit:'%', color:'#ffa726', gTop:'rgba(255,167,38,.35)',  gBot:'rgba(255,167,38,.03)',   idx:4,
+    sumFn:(d)=>{ const s=d[0][4],e=d[d.length-1][4],dp=Math.max(0,s-e);
+      return [{v:s+'%',l:'Awal'},{v:e+'%',l:'Akhir'},{v:'-'+dp+'%',l:'Turun'}]; }},
 };
 
 function switchTelemTab(tab){
   _telemActiveTab = tab;
   Object.keys(TELEM_CFG).forEach(k=>{
-    const el=document.getElementById('ttab-'+k);
-    if(el){ el.classList.toggle('active', k===tab); el.style.background=k===tab?TELEM_CFG[k].color:''; }
+    const el = document.getElementById('ttab-'+k);
+    if(!el) return;
+    const active = k===tab;
+    el.classList.toggle('active', active);
+    el.style.background = active ? TELEM_CFG[k].color : '';
+    el.style.color = active ? '#000' : '';
   });
   renderTelemChart();
 }
 
 function renderTelemChart(){
-  const canvas = document.getElementById('telemCanvas');
-  const noData = document.getElementById('telemNoData');
-  const wrap   = document.getElementById('telemChartWrap');
+  // Pastikan layout sudah settle sebelum baca offsetWidth
+  requestAnimationFrame(()=> _doRenderTelemChart());
+}
+function _doRenderTelemChart(){
+  const canvas  = document.getElementById('telemCanvas');
+  const noData  = document.getElementById('telemNoData');
+  const dateEl  = document.getElementById('telemTripDate');
   if(!canvas) return;
 
-  // Ambil data: prioritas trip tersimpan terakhir, fallback ke buffer aktif
+  // Cari data: trip history terakhir yg punya telem, atau buffer aktif
+  let data = null, tripDate = '';
   const hist = getTripHistory();
-  let data = null;
-  let tripDate = '';
   if(hist.length && hist[0].telem && hist[0].telem.length > 2){
     data = hist[0].telem;
     const d = new Date(hist[0].date);
@@ -3683,7 +3704,6 @@ function renderTelemChart(){
     tripDate = 'Trip berjalan';
   }
 
-  const dateEl = document.getElementById('telemTripDate');
   if(dateEl) dateEl.textContent = tripDate;
 
   if(!data || data.length < 2){
@@ -3696,124 +3716,95 @@ function renderTelemChart(){
   canvas.style.display = 'block';
   noData.style.display = 'none';
 
-  _telemData = data;
-  const cfg = TELEM_CFG[_telemActiveTab];
+  const cfg  = TELEM_CFG[_telemActiveTab];
   const vals = data.map(r => r[cfg.idx]);
+  const ds   = _telemDownsample(vals, 200);
 
-  // Downsample ke maks 200 titik untuk performa
-  const ds = downsampleTelem(vals, 200);
-
-  const W = canvas.offsetWidth || 300;
-  const H = canvas.offsetHeight || 130;
-  canvas.width  = W * (window.devicePixelRatio||1);
-  canvas.height = H * (window.devicePixelRatio||1);
+  const W = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 0;
+  // FIX4: kalau masih 0 (layout belum selesai di WebView), retry setelah 200ms
+  if(W === 0){
+    setTimeout(() => _doRenderTelemChart(), 200);
+    return;
+  }
+  const H = 130;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
   const ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+  ctx.scale(dpr, dpr);
 
   const maxV = Math.max(...ds, 1);
-  const PAD = { top:10, right:8, bottom:4, left:34 };
+  const PAD  = {top:12, right:8, bottom:4, left:32};
   const cW = W - PAD.left - PAD.right;
-  const cH = H - PAD.top - PAD.bottom;
+  const cH = H - PAD.top  - PAD.bottom;
 
-  const xOf = i => PAD.left + (i/(ds.length-1)) * cW;
+  const xOf = i => PAD.left + (i/(ds.length-1||1)) * cW;
   const yOf = v => PAD.top  + cH - (v/maxV) * cH;
 
-  // Grid lines
-  ctx.strokeStyle = 'rgba(255,255,255,.05)';
-  ctx.lineWidth   = 1;
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
   [0.25,0.5,0.75,1].forEach(f=>{
     const y = PAD.top + cH*(1-f);
     ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(PAD.left+cW,y); ctx.stroke();
-    // Y-axis label
-    ctx.fillStyle = 'rgba(255,255,255,.3)';
-    ctx.font = `${9*(window.devicePixelRatio||1)/1}px Inter, sans-serif`;
-    ctx.textAlign = 'right';
-    ctx.fillText(Math.round(maxV*f), PAD.left-4, y+3);
+    ctx.fillStyle='rgba(255,255,255,.28)'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV*f), PAD.left-3, y+3);
   });
 
   // Gradient fill
   const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top+cH);
-  grad.addColorStop(0,   cfg.gradTop);
-  grad.addColorStop(1,   cfg.gradBot);
+  grad.addColorStop(0, cfg.gTop); grad.addColorStop(1, cfg.gBot);
   ctx.beginPath();
-  ctx.moveTo(xOf(0), yOf(ds[0]));
-  ds.forEach((v,i)=>{ if(i>0) ctx.lineTo(xOf(i), yOf(v)); });
+  ctx.moveTo(xOf(0), PAD.top+cH);
+  ds.forEach((v,i)=> ctx.lineTo(xOf(i), yOf(v)));
   ctx.lineTo(xOf(ds.length-1), PAD.top+cH);
-  ctx.lineTo(xOf(0), PAD.top+cH);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
+  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
 
   // Line
   ctx.beginPath();
-  ctx.moveTo(xOf(0), yOf(ds[0]));
-  ds.forEach((v,i)=>{ if(i>0) ctx.lineTo(xOf(i), yOf(v)); });
-  ctx.strokeStyle = cfg.color;
-  ctx.lineWidth   = 2;
-  ctx.lineJoin    = 'round';
-  ctx.stroke();
+  ds.forEach((v,i)=> i===0 ? ctx.moveTo(xOf(i),yOf(v)) : ctx.lineTo(xOf(i),yOf(v)));
+  ctx.strokeStyle=cfg.color; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
 
-  // Summary cards
-  const sumItems = cfg.sumFn(data);
-  document.getElementById('telemSummary').innerHTML = sumItems.map(s=>
+  // Summary
+  document.getElementById('telemSummary').innerHTML = cfg.sumFn(data).map(s=>
     `<div class="telem-sum-item"><div class="telem-sum-val" style="color:${cfg.color}">${s.v}</div><div class="telem-sum-lbl">${s.l}</div></div>`
   ).join('');
 
-  // X-axis labels (waktu / jarak)
-  const totalSec = (data[data.length-1][0] - data[0][0]);
-  const fmtMin = s => { const m=Math.floor(s/60); return m+'m'; };
-  const axLabels = [fmtMin(0), fmtMin(totalSec*0.25), fmtMin(totalSec*0.5), fmtMin(totalSec*0.75), fmtMin(totalSec)];
-  document.getElementById('telemAxisX').innerHTML = axLabels.map(l=>`<span>${l}</span>`).join('');
+  // X-axis waktu
+  const totalSec = data.length > 1 ? (data[data.length-1][0] - data[0][0]) : 0;
+  const fm = s => Math.floor(s/60)+'m';
+  document.getElementById('telemAxisX').innerHTML =
+    [0,.25,.5,.75,1].map(f=>`<span>${fm(totalSec*f)}</span>`).join('');
 
-  // Touch/mouse interaction (crosshair + tooltip)
-  setupTelemInteraction(canvas, ds, data, cfg, xOf, yOf, PAD, cW, maxV, W, H);
-}
-
-function downsampleTelem(arr, maxPts){
-  if(arr.length <= maxPts) return arr.slice();
-  const out = [], step = arr.length / maxPts;
-  for(let i=0;i<maxPts;i++) out.push(arr[Math.floor(i*step)]);
-  return out;
-}
-
-function setupTelemInteraction(canvas, ds, rawData, cfg, xOf, yOf, PAD, cW, maxV, W, H){
+  // Interaksi sentuh/mouse — crosshair + tooltip
   const crosshair = document.getElementById('telemCrosshair');
   const tooltip   = document.getElementById('telemTooltip');
-  const wrap      = document.getElementById('telemChartWrap');
-
-  function onMove(clientX){
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const idx = Math.max(0, Math.min(ds.length-1, Math.round((x - PAD.left)/cW*(ds.length-1))));
-    const val = ds[idx];
-    const px  = xOf(idx);
-    if(crosshair){ crosshair.style.display='block'; crosshair.style.left=px+'px'; }
-    if(tooltip){
-      tooltip.style.display='block';
-      tooltip.textContent = `${val} ${cfg.unit}`;
-      const tl = Math.min(px+8, W - 90);
-      tooltip.style.left = tl + 'px';
-    }
-  }
-  function onEnd(){
-    if(crosshair) crosshair.style.display='none';
-    if(tooltip)   tooltip.style.display='none';
-  }
-
-  // Remove old listeners by cloning node
-  const newCanvas = canvas.cloneNode(true);
+  const newCanvas = canvas.cloneNode(true); // buang event lama
   canvas.parentNode.replaceChild(newCanvas, canvas);
-  newCanvas.addEventListener('mousemove', e => onMove(e.clientX));
+  function onMove(cx){
+    const rect = newCanvas.getBoundingClientRect();
+    const x = cx - rect.left;
+    const idx = Math.max(0, Math.min(ds.length-1, Math.round((x-PAD.left)/cW*(ds.length-1))));
+    if(crosshair){ crosshair.style.display='block'; crosshair.style.left=xOf(idx)+'px'; }
+    if(tooltip){ tooltip.style.display='block'; tooltip.textContent=ds[idx]+' '+cfg.unit; tooltip.style.left=Math.min(xOf(idx)+8,W-80)+'px'; }
+  }
+  function onEnd(){ if(crosshair) crosshair.style.display='none'; if(tooltip) tooltip.style.display='none'; }
+  newCanvas.addEventListener('mousemove', e=>onMove(e.clientX));
   newCanvas.addEventListener('mouseleave', onEnd);
-  newCanvas.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientX); }, {passive:false});
+  newCanvas.addEventListener('touchmove',  e=>{e.preventDefault();onMove(e.touches[0].clientX);},{passive:false});
   newCanvas.addEventListener('touchend',   onEnd);
 }
 
-// Init tab warna saat load
+function _telemDownsample(arr, max){
+  if(arr.length<=max) return arr.slice();
+  const out=[], step=arr.length/max;
+  for(let i=0;i<max;i++) out.push(arr[Math.floor(i*step)]);
+  return out;
+}
+
 function initTelemTabColors(){
   Object.keys(TELEM_CFG).forEach(k=>{
     const el=document.getElementById('ttab-'+k);
-    if(el && k===_telemActiveTab) el.style.background=TELEM_CFG[k].color;
+    if(el && k===_telemActiveTab){ el.style.background=TELEM_CFG[k].color; el.style.color='#000'; }
   });
 }
 
@@ -3859,7 +3850,9 @@ function resetTrip(){
       ridingScore: calcFinalRidingScore(),
       costIDR: calcTripCost(finalEnergy),
       path: simplifyPath(tripPath),
-      telem: _telemBuffer.slice(), // simpan snapshot telemetri
+      telem: _telemBuffer.length > 360
+        ? _telemBuffer.filter((_,i,a) => i % Math.ceil(a.length/360) === 0) // downsample ke max 360 pts
+        : _telemBuffer.slice(), // snapshot telemetri untuk grafik Coros
     });
     resetRidingScore();
     justSavedTrip = true;
@@ -4212,7 +4205,6 @@ function parseResponse(raw){
       renderBatteryIcon(num);
       updateBattPower();
       updateRangeEstimate();
-      updateSocBar(num); // [FIX-SOC] update progress bar setiap SOC baru masuk
       // Notifikasi baterai rendah
       if(num < 15 && !lowBattNotified){
         notify('🔋 Baterai Rendah', `SOC tersisa ${num}% — segera cas baterai motor.`);
@@ -4305,7 +4297,6 @@ function parseResponse(raw){
         }
       }
       updateLivePowerSummary(); updateBattPower(); updateRangeEstimate();
-      updateChargingEstimate(); // [FIX2] tampilkan estimasi charging saat IBAT update
       if(document.getElementById('screen-diagnosis').classList.contains('active')) drawChart();
       break;
     case 'CBAT':
@@ -4388,7 +4379,7 @@ function startPolling(){
   startTripRangeSender();
   startDashRotation();
   startMapsStream(); // AT+MAPS jalan terus selama koneksi aktif
-  startTelemLogger(); // rekam telemetri trip
+  startTelemLogger(); // rekam telemetri Coros-style
 }
 function stopPolling(){
   if(pollTimer){clearInterval(pollTimer);pollTimer=null;} pollIdx=0;
@@ -4461,11 +4452,12 @@ function getDashRotationItems(){
     const co2 = calcCO2Saving(distKm, tripEnergyWh);
     items.push(co2 ? `CO2 Hemat ${co2>=1000?(co2/1000).toFixed(2)+' kg':co2.toFixed(0)+' g'}` : 'CO2 Hemat 0 g');
   }
-  // Cuaca — gunakan data yang sudah di-fetch ke home widget
-  if(DASH_TOGGLES.weather && _navWeatherStr){
-    items.push(_navWeatherStr);
+  // Cuaca — split di batas kata kalau > 20 char (maks jadi 2 slot rotasi)
+  if(DASH_TOGGLES.cuaca && _weatherMoodText){
+    splitNavText(_weatherMoodText).forEach(part => items.push(part));
   }
   // Saat navigasi aktif, nama jalan yg sedang dilalui ikut masuk giliran yang sama
+  // splitNavText memastikan teks > 20 char dipotong di batas kata (maks 2 slot)
   if(navActive){
     const roadStep = currentStepIdx > 0 ? routeSteps[currentStepIdx-1] : routeSteps[currentStepIdx];
     let roadName = roadStep ? roadNameForStep(roadStep) : '';
@@ -4473,19 +4465,9 @@ function getDashRotationItems(){
       const fb = navTextShort();
       if(fb) roadName = fb.distStr + ' ' + fb.action;
     }
-    if(roadName) items.push(roadName);
+    if(roadName) splitNavText(roadName).forEach(part => items.push(part));
   }
   return items;
-}
-
-// Potong teks maks N karakter di batas kata (tidak potong di tengah kata)
-function splitAtWordBoundary(text, maxLen){
-  if(text.length <= maxLen) return [text];
-  let cutAt = text.lastIndexOf(' ', maxLen);
-  if(cutAt <= 0) cutAt = maxLen;
-  const part1 = text.substring(0, cutAt).trim();
-  const part2 = text.substring(cutAt).trim();
-  return part2 ? [part1, part2] : [part1];
 }
 
 function sendDashRotationTick(){
@@ -4495,26 +4477,10 @@ function sendDashRotationTick(){
   if(dashRotateIdx >= items.length) dashRotateIdx = 0;
   const text = items[dashRotateIdx];
   dashRotateIdx = (dashRotateIdx+1) % items.length;
-
-  // Jika teks melebihi 20 karakter, kirim dalam 2 bagian berurutan
-  const MAX_DASH_CHARS = 20;
-  if(text.length > MAX_DASH_CHARS){
-    const parts = splitAtWordBoundary(text, MAX_DASH_CHARS);
-    sendCmd(`AT+NAV="${parts[0]}"\r\n`);
-    if(parts[1]){
-      setTimeout(()=>{
-        if(isConnected) sendCmd(`AT+NAV="${parts[1]}"\r\n`);
-      }, 1500);
-    }
-    if(IS_NATIVE_ANDROID){
-      try { Android.setNavData(parts[0]); } catch(e) {}
-    }
-  } else {
-    sendCmd(`AT+NAV="${text}"\r\n`);
-    // Update Java dengan data NAV terkini agar bisa dikirim ulang saat layar mati
-    if(IS_NATIVE_ANDROID){
-      try { Android.setNavData(text); } catch(e) {}
-    }
+  sendCmd(`AT+NAV="${text}"\r\n`);
+  // Update Java dengan data NAV terkini agar bisa dikirim ulang saat layar mati
+  if(IS_NATIVE_ANDROID) {
+    try { Android.setNavData(text); } catch(e) {}
   }
 }
 
@@ -4912,29 +4878,52 @@ function osmRasterStyleMulti(layers, attribution){
   return { version:8, sources, layers:mapLayers, attribution };
 }
 const MAP_STYLES_OSM={
-  // Hari: tile standar OpenStreetMap
+  // ── Siang: OSM Bright vector style (mirip Mapbox Streets, ada garis jalan berwarna) ──
+  // Pakai tile.openstreetmap.fr/hot untuk raster fallback, tapi priority ke vector
   day: osmRasterStyle(
-    ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png','https://b.tile.openstreetmap.org/{z}/{x}/{y}.png','https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'],
-    '© OpenStreetMap contributors'),
-  // Malam: dark_all = background + garis jalan + label semua dalam 1 tile (CARTO Dark Matter).
-  // Ini yang paling lengkap dan terbaca. dark_matter_no_labels tidak punya garis jalan sama sekali.
+    ['https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+     'https://b.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'],
+    '© OpenStreetMap contributors, Humanitarian OpenStreetMap Team'),
+
+  // ── Malam: CARTO Dark Matter (background gelap + garis jalan + label) ──
   night: osmRasterStyle(
     ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
      'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
      'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
      'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
     '© OpenStreetMap contributors © CARTO'),
-  // Satelit: imagery gratis Esri (tanpa key) + layer label/jalan/batas di atasnya → hybrid
+
+  // ── Satelit: Esri imagery + label CARTO ──
   satellite: osmRasterStyleMulti([
     { id:'imagery', tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] },
-    // Label dari CARTO (basis data OSM) — coverage jalan/nama desa jauh lebih
-    // lengkap drpd layer reference Esri yg nyaris kosong di luar kota besar/US.
-    { id:'labels',  tiles:['https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png','https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png'] },
-  ], 'Esri, Maxar, Earthstar Geographics · © OpenStreetMap contributors © CARTO'),
+    { id:'labels',  tiles:['https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+                            'https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+                            'https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+                            'https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png'] },
+  ], 'Esri, Maxar · © OpenStreetMap contributors © CARTO'),
 };
+
+// ── Vector style OSM dengan garis jalan berwarna (mirip Mapbox Streets) ──
+// Pakai OpenFreeMap — gratis, tanpa API key, vector tiles dari OSM
+// Dokumentasi: https://openfreemap.org
+const MAP_STYLES_OSM_VECTOR = {
+  day:   'https://tiles.openfreemap.org/styles/liberty',
+  night: 'https://tiles.openfreemap.org/styles/dark',
+  // Satellite tetap pakai raster (tidak ada vector satellite gratis)
+  satellite: null,
+};
+
+// Gunakan vector style kalau tersedia, fallback ke raster
+function getOsmStyle(name){
+  // Vector style lebih bagus — garis jalan berwarna seperti Mapbox Streets
+  const vectorUrl = MAP_STYLES_OSM_VECTOR[name];
+  if(vectorUrl) return vectorUrl;
+  return MAP_STYLES_OSM[name] || MAP_STYLES_OSM.day;
+}
 function getMapStyle(name){
   if(MAP_PROVIDER==='maptiler') return getMapStyleMaptiler(name);
-  return (MAP_PROVIDER==='osm' ? MAP_STYLES_OSM : MAP_STYLES_MAPBOX)[name];
+  if(MAP_PROVIDER==='osm') return getOsmStyle(name);
+  return MAP_STYLES_MAPBOX[name];
 }
 function getMapStyleMaptiler(name){
   const k = MAPTILER_KEY;
@@ -4973,7 +4962,7 @@ function initMap(){
 
   mapInstance=new mapboxgl.Map({
     container:'mapContainer',
-    style:getMapStyle(localStorage.getItem('map_style')||'day'), // [FIX7] default siang, ingat pilihan user
+    style:getMapStyle('day'),
     center:[106.8456,-6.2088],
     zoom:15,
     attributionControl:false,
@@ -5062,15 +5051,14 @@ function initMap(){
     },{enableHighAccuracy:true,maximumAge:1500});
   }
 
-  // Set default style dari localStorage (default: siang)
-  currentStyle=localStorage.getItem('map_style')||'day'; updateStyleBtns();
+  // Set default style siang
+  currentStyle='day'; updateStyleBtns();
 }
 
 // ── MAP STYLE ──
 function setMapStyle(style){
   if(!mapInstance) return;
   currentStyle=style;
-  localStorage.setItem('map_style', style); // [FIX7] simpan pilihan style
   mapInstance.setStyle(getMapStyle(style));
   mapInstance.once('styledata',()=>{
     if(routeActive) redrawRoute();
@@ -6362,50 +6350,48 @@ async function snapMapToBase64(){
         img.onerror=()=>res();
         img.src=customB64;
       });
+    } else if(navActive){
+      // ── Mode Navigasi: arrow segitiga biru (sama seperti marker app saat nav) ──
+      // PENTING: TIDAK di-rotate pakai userHeading. Canvas map sudah dalam bearing=userHeading,
+      // jadi "atas" snapshot = arah hadap motor. Rotate lagi = rotasi dobel.
+      const arrowH=R*1.4, arrowW=R*0.9;
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.beginPath();
+      ctx.moveTo(0,-arrowH);
+      ctx.lineTo(arrowW,arrowH*0.5);
+      ctx.lineTo(0,arrowH*0.2);
+      ctx.lineTo(-arrowW,arrowH*0.5);
+      ctx.closePath();
+      ctx.fillStyle='#2979ff';
+      ctx.strokeStyle='#fff';ctx.lineWidth=Math.max(1,R*0.15);
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+      // Halo di bawah arrow
+      ctx.save();
+      ctx.beginPath();ctx.arc(cx,cy,R*0.45,0,Math.PI*2);
+      ctx.fillStyle='rgba(41,121,255,0.25)';ctx.fill();
+      ctx.restore();
+
     } else {
-      // [FIX-MARKER] Sesuaikan marker snapshot dengan marker di app:
-      // - Freedrive (tidak navigasi) → dot bulat biru (sama dgn buildUserMarkerEl('freedrive'))
-      // - Navigasi aktif → arrow segitiga biru (sama dgn buildUserMarkerEl('nav'))
-      if(!navActive){
-        // ── Dot biru (freedrive) ──
-        // Outer ring transparan
-        ctx.save();
-        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
-        ctx.fillStyle='rgba(33,150,243,0.22)'; ctx.fill();
-        ctx.strokeStyle='#1565C0'; ctx.lineWidth=Math.max(1, R*0.14);
-        ctx.stroke();
-        ctx.restore();
-        // Cincin putih
-        ctx.save();
-        ctx.beginPath(); ctx.arc(cx, cy, R*0.70, 0, Math.PI*2);
-        ctx.fillStyle='white'; ctx.fill();
-        ctx.restore();
-        // Dot biru solid
-        ctx.save();
-        ctx.beginPath(); ctx.arc(cx, cy, R*0.57, 0, Math.PI*2);
-        ctx.fillStyle='#2196F3'; ctx.fill();
-        ctx.restore();
-      } else {
-        // ── Arrow segitiga (navigasi) ──
-        const arrowH=R*1.4, arrowW=R*0.9;
-        ctx.save();
-        ctx.translate(cx,cy);
-        ctx.beginPath();
-        ctx.moveTo(0,-arrowH);
-        ctx.lineTo(arrowW,arrowH*0.5);
-        ctx.lineTo(0,arrowH*0.2);
-        ctx.lineTo(-arrowW,arrowH*0.5);
-        ctx.closePath();
-        ctx.fillStyle='#2979ff';
-        ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(1,R*0.15);
-        ctx.fill(); ctx.stroke();
-        ctx.restore();
-        // Halo bawah arrow
-        ctx.save();
-        ctx.beginPath(); ctx.arc(cx, cy, R*0.45, 0, Math.PI*2);
-        ctx.fillStyle='rgba(41,121,255,0.25)'; ctx.fill();
-        ctx.restore();
-      }
+      // ── Mode Free Drive: dot bulat biru — identik dengan marker di app ──
+      // Outer halo biru transparan
+      ctx.save();
+      ctx.beginPath();ctx.arc(cx,cy,R*1.1,0,Math.PI*2);
+      ctx.fillStyle='rgba(33,150,243,0.22)';
+      ctx.strokeStyle='#1565C0';ctx.lineWidth=Math.max(1,R*0.13);
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+      // Ring putih
+      ctx.save();
+      ctx.beginPath();ctx.arc(cx,cy,R*0.82,0,Math.PI*2);
+      ctx.fillStyle='white';ctx.fill();
+      ctx.restore();
+      // Core biru solid
+      ctx.save();
+      ctx.beginPath();ctx.arc(cx,cy,R*0.68,0,Math.PI*2);
+      ctx.fillStyle='#2196F3';ctx.fill();
+      ctx.restore();
     }
 
     // ── Encode JPEG dengan quality adaptif ──
@@ -6477,7 +6463,7 @@ function openSettings(){
   document.getElementById('dashTogEnergi').checked=!!DASH_TOGGLES.energi;
   document.getElementById('dashTogEfisiensi').checked=!!DASH_TOGGLES.efisiensi;
   document.getElementById('dashTogCo2').checked=!!DASH_TOGGLES.co2;
-  document.getElementById('dashTogWeather').checked=!!DASH_TOGGLES.weather;
+  document.getElementById('dashTogCuaca').checked=!!DASH_TOGGLES.cuaca;
   document.getElementById('inDashRotateSec').value=DASH_ROTATE_SEC;
   renderSnapPresets();
   pickProvider(MAP_PROVIDER);
@@ -6525,7 +6511,7 @@ function pickProvider(p){
   const hints = {
     osm:      '💡 OSM: 100% gratis tanpa token — mode malam pakai tile CARTO, satelit pakai Esri.',
     mapbox:   IS_NATIVE_ANDROID
-      ? '⚠️ Mapbox mungkin tidak render di Android native WebView. Gunakan OSM atau MapTiler untuk hasil terbaik di app.'
+      ? '⚠️ Mapbox mungkin tidak render di Android WebView. Disarankan pakai OSM atau MapTiler.'
       : '💡 Mapbox: peta vektor berkualitas tinggi, butuh token (ada kuota gratis bulanan).',
     maptiler: '💡 MapTiler: peta vektor jernih & terbaca, mirip referensi. Daftar gratis di maptiler.com (100K tiles/bulan).',
   };
@@ -6548,7 +6534,7 @@ function saveSettings(){
     energi:    document.getElementById('dashTogEnergi').checked,
     efisiensi: document.getElementById('dashTogEfisiensi').checked,
     co2:       document.getElementById('dashTogCo2').checked,
-    weather:   document.getElementById('dashTogWeather').checked,
+    cuaca:     document.getElementById('dashTogCuaca').checked,
   };
   let dashRotateSec = parseInt(document.getElementById('inDashRotateSec').value)||5;
   dashRotateSec = Math.min(60, Math.max(2, dashRotateSec));
@@ -6846,6 +6832,150 @@ function storyPrev(){ goToStorySlide(storyState.slide-1); }
 function shareStoryTrip(){
   if(storyState.tripIdx != null) shareTrip(storyState.tripIdx);
 }
+function saveStoryTripPng(){
+  if(storyState.tripIdx != null) saveTripPng(storyState.tripIdx);
+}
+
+// Render canvas trip summary lalu panggil callback(blob)
+async function _renderTripCanvas(i, callback){
+  const t = getTripHistory()[i];
+  if(!t) return;
+  const d = new Date(t.date);
+  const SCALE = 2;
+  const W=640, H=924;
+  const canvas = document.createElement('canvas');
+  canvas.width = W*SCALE; canvas.height = H*SCALE;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+  ctx.textBaseline = 'alphabetic';
+
+  const grad = ctx.createLinearGradient(0,0,W,H);
+  grad.addColorStop(0,'#0d1117'); grad.addColorStop(1,'#1a2030');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle='#ff5252'; ctx.font='800 28px Arial';
+  ctx.fillText('GESITS TRIP SUMMARY', 32, 52);
+  ctx.fillStyle='#aab2c5'; ctx.font='600 15px Arial';
+  ctx.fillText(d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) + ' · ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}), 32, 78);
+
+  const mapX=32, mapY=96, mapW=W-64, mapH=230;
+  ctx.save();
+  const mr=16;
+  ctx.beginPath();
+  ctx.moveTo(mapX+mr,mapY);
+  ctx.lineTo(mapX+mapW-mr,mapY); ctx.quadraticCurveTo(mapX+mapW,mapY,mapX+mapW,mapY+mr);
+  ctx.lineTo(mapX+mapW,mapY+mapH-mr); ctx.quadraticCurveTo(mapX+mapW,mapY+mapH,mapX+mapW-mr,mapY+mapH);
+  ctx.lineTo(mapX+mr,mapY+mapH); ctx.quadraticCurveTo(mapX,mapY+mapH,mapX,mapY+mapH-mr);
+  ctx.lineTo(mapX,mapY+mr); ctx.quadraticCurveTo(mapX,mapY,mapX+mr,mapY);
+  ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fill(); ctx.clip();
+  const drawn = t.path && t.path.length>1 ? drawTripRouteShape(ctx, t.path, mapX, mapY, mapW, mapH) : false;
+  if(!drawn){
+    ctx.fillStyle='#5a6478'; ctx.font='600 14px Arial'; ctx.textAlign='center';
+    ctx.fillText('Rute tidak tercatat', mapX+mapW/2, mapY+mapH/2);
+    ctx.textAlign='left';
+  }
+  ctx.restore();
+
+  ctx.fillStyle='#00e676'; ctx.font='800 76px Rajdhani, Arial';
+  ctx.fillText(t.distance.toFixed(1)+' km', 32, 422);
+  ctx.fillStyle='#9aa3b8'; ctx.font='700 13px Arial';
+  ctx.fillText('TOTAL JARAK TRIP', 32, 446);
+
+  const co2Saved = calcCO2Saving(t.distance, t.energyWh);
+  const rows = [
+    ['Kecepatan Rata-rata', t.avgSpeed.toFixed(0)+' km/h'],
+    ['Kecepatan Maksimum',  t.maxSpeed.toFixed(0)+' km/h'],
+    ['Energi Terpakai',     t.energyWh.toFixed(0)+' Wh'],
+    ['Efisiensi',           t.efficiency ? t.efficiency.toFixed(1)+' Wh/km' : '—'],
+    ['Daya Maksimum',       t.maxPowerW  ? t.maxPowerW.toFixed(0)+' W'      : '—'],
+    ['Energi Regen',        t.regenWh    ? t.regenWh.toFixed(0)+' Wh'       : '0 Wh'],
+    ['Daya Regen Maks',     t.maxRegenW  ? t.maxRegenW.toFixed(0)+' W'      : '—'],
+    ['Energi Charge',       t.chargeWh   ? t.chargeWh.toFixed(0)+' Wh'      : '0 Wh'],
+    ['🌱 CO₂ Dihemat',      co2Saved     ? (co2Saved>=1000?(co2Saved/1000).toFixed(2)+' kg':co2Saved.toFixed(0)+' g') : '—'],
+    ['💰 Biaya Listrik',    t.energyWh>0 ? 'Rp '+Math.round((t.costIDR||((t.energyWh/1000)*1447))).toLocaleString('id-ID') : '—'],
+    ['🏆 Riding Score',     t.ridingScore!=null ? t.ridingScore+'/100' : '—'],
+  ];
+  let y = 480;
+  const rowH = 38;
+  rows.forEach((r,idx)=>{
+    if(idx%2===0){ ctx.fillStyle='rgba(255,255,255,0.025)'; ctx.fillRect(20, y-22, W-40, rowH); }
+    ctx.fillStyle='#9aa3b8'; ctx.font='600 15px Arial'; ctx.textAlign='left';
+    ctx.fillText(r[0], 32, y);
+    ctx.fillStyle='#ffffff'; ctx.font='800 17px Arial'; ctx.textAlign='right';
+    ctx.fillText(r[1], W-32, y);
+    ctx.textAlign='left';
+    y += rowH;
+  });
+  ctx.fillStyle='#5a6478'; ctx.font='600 12px Arial';
+  ctx.fillText('GESITS Dashboard PWA', 32, H-20);
+
+  canvas.toBlob(callback, 'image/png');
+}
+
+// SHARE trip (kirim via WhatsApp dll) — khusus file share
+async function shareTrip(i){
+  showToast('⏳ Membuat gambar...');
+  await _renderTripCanvas(i, async (blob)=>{
+    if(!blob){ showToast('Gagal membuat gambar'); return; }
+
+    if(IS_NATIVE_ANDROID){
+      const reader = new FileReader();
+      reader.onloadend = ()=>{
+        const base64 = reader.result.split(',')[1];
+        try{
+          Android.shareImage(base64, 'gesits-trip-'+i+'.png', 'GESITS Trip Summary');
+        } catch(e){
+          try{ Android.exportFile('gesits-trip-'+i+'.png', atob(base64).split('').map(c=>c.charCodeAt(0)), 'image/png'); }catch(e2){}
+        }
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+
+    // Browser/PWA: coba Web Share API dengan file
+    const file = new File([blob], 'gesits-trip.png', {type:'image/png'});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:'GESITS Trip Summary'}); return; }catch(e){}
+    }
+    // Fallback: download
+    _downloadBlob(blob, 'gesits-trip-'+i+'.png');
+  });
+}
+
+// SIMPAN PNG ke storage lokal (tanpa share dialog)
+async function saveTripPng(i){
+  showToast('⏳ Menyimpan gambar...');
+  await _renderTripCanvas(i, async (blob)=>{
+    if(!blob){ showToast('Gagal membuat gambar'); return; }
+
+    if(IS_NATIVE_ANDROID){
+      const reader = new FileReader();
+      reader.onloadend = ()=>{
+        const base64 = reader.result.split(',')[1];
+        try{
+          // savePng ke gallery/Downloads via Java bridge
+          Android.savePng(base64, 'gesits-trip-'+i+'.png');
+          showToast('✅ Tersimpan ke galeri / Downloads');
+        } catch(e){
+          try{ Android.exportFile('gesits-trip-'+i+'.png', atob(base64).split('').map(c=>c.charCodeAt(0)), 'image/png'); }catch(e2){}
+        }
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+    _downloadBlob(blob, 'gesits-trip-'+i+'.png');
+    showToast('✅ Gambar diunduh');
+  });
+}
+
+function _downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
 
 // Gambar bentuk rute (glow + garis + titik start/finish) ke canvas, dipakai di kartu share trip
 function drawTripRouteShape(ctx, path, boxX, boxY, boxW, boxH){
@@ -6893,6 +7023,7 @@ function renderTripHistory(){
         <div style="display:flex;gap:10px">
           <div class="trip-item-share" style="color:var(--green)" onclick="openStory(${i})">▶ Story</div>
           <div class="trip-item-share" onclick="shareTrip(${i})">📤 Share</div>
+          <div class="trip-item-share" onclick="saveTripPng(${i})">💾 Simpan</div>
           <div class="trip-item-share" style="color:#fc4c02" onclick="shareTripToStrava(${i})">🟠 Strava</div>
         </div>
       </div>
@@ -6980,133 +7111,6 @@ async function shareTripToStrava(i){
   showToast('📥 GPX diunduh — buka app Strava → + → Import file');
 }
 
-
-async function shareTrip(i){
-  const t = getTripHistory()[i];
-  if(!t) return;
-  const d = new Date(t.date);
-
-  // Render di 2x lalu scale via canvas context — hasil PNG jauh lebih tajam di layar retina/HP modern
-  const SCALE = 2;
-  const W=640, H=924;
-  const canvas = document.createElement('canvas');
-  canvas.width = W*SCALE; canvas.height = H*SCALE;
-  canvas.style.width = W+'px'; canvas.style.height = H+'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(SCALE, SCALE);
-  ctx.textBaseline = 'alphabetic';
-
-  const grad = ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'#0d1117'); grad.addColorStop(1,'#1a2030');
-  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-
-  // ── HEADER ──
-  ctx.fillStyle='#ff5252'; ctx.font='800 28px Arial';
-  ctx.fillText('GESITS TRIP SUMMARY', 32, 52);
-
-  ctx.fillStyle='#aab2c5'; ctx.font='600 15px Arial';
-  ctx.fillText(d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) + ' · ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}), 32, 78);
-
-  // ── PETA RUTE ──
-  const mapX=32, mapY=96, mapW=W-64, mapH=230;
-  ctx.save();
-  const mr=16;
-  ctx.beginPath();
-  ctx.moveTo(mapX+mr,mapY);
-  ctx.lineTo(mapX+mapW-mr,mapY); ctx.quadraticCurveTo(mapX+mapW,mapY,mapX+mapW,mapY+mr);
-  ctx.lineTo(mapX+mapW,mapY+mapH-mr); ctx.quadraticCurveTo(mapX+mapW,mapY+mapH,mapX+mapW-mr,mapY+mapH);
-  ctx.lineTo(mapX+mr,mapY+mapH); ctx.quadraticCurveTo(mapX,mapY+mapH,mapX,mapY+mapH-mr);
-  ctx.lineTo(mapX,mapY+mr); ctx.quadraticCurveTo(mapX,mapY,mapX+mr,mapY);
-  ctx.closePath();
-  ctx.fillStyle='rgba(255,255,255,0.06)';
-  ctx.fill();
-  ctx.clip();
-  const drawn = t.path && t.path.length>1 ? drawTripRouteShape(ctx, t.path, mapX, mapY, mapW, mapH) : false;
-  if(!drawn){
-    ctx.fillStyle='#5a6478'; ctx.font='600 14px Arial'; ctx.textAlign='center';
-    ctx.fillText('Rute tidak tercatat', mapX+mapW/2, mapY+mapH/2);
-    ctx.textAlign='left';
-  }
-  ctx.restore();
-
-  // ── JARAK BESAR ──
-  ctx.fillStyle='#00e676'; ctx.font='800 76px Rajdhani, Arial';
-  ctx.fillText(t.distance.toFixed(1)+' km', 32, 422);
-  ctx.fillStyle='#9aa3b8'; ctx.font='700 13px Arial';
-  ctx.save(); ctx.letterSpacing = '1px';
-  ctx.fillText('TOTAL JARAK TRIP', 32, 446);
-  ctx.restore();
-
-  // ── DATA ROWS ──
-  const co2Saved = calcCO2Saving(t.distance, t.energyWh);
-  const rows = [
-    ['Kecepatan Rata-rata', t.avgSpeed.toFixed(0)+' km/h'],
-    ['Kecepatan Maksimum',  t.maxSpeed.toFixed(0)+' km/h'],
-    ['Energi Terpakai',     t.energyWh.toFixed(0)+' Wh'],
-    ['Efisiensi',           t.efficiency ? t.efficiency.toFixed(1)+' Wh/km' : '—'],
-    ['Daya Maksimum',       t.maxPowerW  ? t.maxPowerW.toFixed(0)+' W'      : '—'],
-    ['Energi Regen',        t.regenWh    ? t.regenWh.toFixed(0)+' Wh'       : '0 Wh'],
-    ['Daya Regen Maks',     t.maxRegenW  ? t.maxRegenW.toFixed(0)+' W'      : '—'],
-    ['Energi Charge',       t.chargeWh   ? t.chargeWh.toFixed(0)+' Wh'      : '0 Wh'],
-    ['🌱 CO₂ Dihemat',      co2Saved     ? (co2Saved>=1000?(co2Saved/1000).toFixed(2)+' kg'
-                                          : co2Saved.toFixed(0)+' g')        : '—'],
-    ['💰 Biaya Listrik',    t.energyWh>0 ? 'Rp '+Math.round((t.costIDR||((t.energyWh/1000)*1447))).toLocaleString('id-ID') : '—'],
-    ['🏆 Riding Score',     t.ridingScore!=null ? t.ridingScore+'/100'        : '—'],
-  ];
-  let y = 480;
-  const rowH = 38;
-  rows.forEach((r,idx)=>{
-    // Background selang-seling: bantu pemisahan baris tanpa garis tipis yang hilang di kontras rendah
-    if(idx % 2 === 0){
-      ctx.fillStyle='rgba(255,255,255,0.025)';
-      ctx.fillRect(20, y-22, W-40, rowH);
-    }
-    ctx.fillStyle='#9aa3b8'; ctx.font='600 15px Arial'; ctx.textAlign='left';
-    ctx.fillText(r[0], 32, y);
-    ctx.fillStyle='#ffffff'; ctx.font='800 17px Arial'; ctx.textAlign='right';
-    ctx.fillText(r[1], W-32, y);
-    ctx.textAlign='left';
-    y += rowH;
-  });
-
-  ctx.fillStyle='#5a6478'; ctx.font='600 12px Arial';
-  ctx.fillText('GESITS Dashboard PWA', 32, H-20);
-
-  canvas.toBlob(async (blob)=>{
-    if(!blob) return;
-
-    // Android native — konversi blob ke base64 lalu export via Java
-    if(IS_NATIVE_ANDROID){
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result.split(',')[1];
-        try{
-          // Kirim sebagai PNG via exportFile bridge
-          Android.exportFile('gesits-trip-'+i+'.png',
-            atob(base64).split('').map(c=>c.charCodeAt(0)),
-            'image/png');
-        } catch(e){
-          // Fallback: share teks saja
-          const t2 = getTripHistory()[i];
-          const text = `🏍️ GESITS Trip Summary\n📅 ${new Date(t2.date).toLocaleString('id-ID')}\n📍 ${t2.distance.toFixed(1)} km\n⚡ ${t2.energyWh?.toFixed(0)||'—'} Wh\n🏎️ Avg ${t2.avgSpeed?.toFixed(0)||'—'} km/h`;
-          try{ Android.shareText(text, 'GESITS Trip Summary'); }catch(e2){}
-        }
-      };
-      reader.readAsDataURL(blob);
-      return;
-    }
-
-    // Browser / PWA
-    const file = new File([blob], 'gesits-trip.png', {type:'image/png'});
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file], title:'GESITS Trip Summary'}); return; }catch(e){}
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href=url; a.download='gesits-trip-'+i+'.png'; a.click();
-    setTimeout(()=>URL.revokeObjectURL(url), 2000);
-  }, 'image/png');
-}
 
 // ═══════════════════════════════════════════
 // CHARGING STATIONS (SPKLU) via Overpass API
@@ -7596,6 +7600,10 @@ document.addEventListener('click',e=>{
   if(!e.target.closest('#searchResults')&&!e.target.closest('#navSearchInput'))
     hideSearchResults();
 });
+
+// Inisialisasi voice readout (restore state dari localStorage)
+// [READOUT DIHAPUS — fitur tidak dipakai]
+
 </script>
 <script>
 // ═══════════════════════════════════════════
@@ -7797,7 +7805,7 @@ function renderStatsPage(){
     drawStatsChart('statsEffChart', days, effByDay, 'var(--teal)',  tealRgba);
     initTelemTabColors();
     renderTelemChart();
-  }, 60);
+  }, 200); // [FIX4] 200ms agar Android WebView selesai layout sebelum baca offsetWidth
 
   // Gamifikasi
   const points = gmCalcPoints();
@@ -8311,8 +8319,15 @@ window.addEventListener('appinstalled', () => {
 
 // ── SPLASH SCREEN: bel stasiun 8 nada (4 naik, 4 turun) + auto-hide ──
 function playStationBell(){
+  // FIX: AudioContext di Android WebView butuh user gesture.
+  // Gunakan AudioTrack native via Java bridge agar langsung berbunyi saat splash.
+  if(typeof Android !== 'undefined'){
+    try{ Android.playChime(); }catch(e){}
+    return;
+  }
   try{
     const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
     const ctx = new Ctx();
 
     // Satu nada lonceng: sine + harmonik halus (biar berasa metalik, bukan tone polos) + gain envelope decay
@@ -8342,32 +8357,29 @@ function playStationBell(){
     const fire = () => {
       const t0 = ctx.currentTime;
       // Tangga nada pentatonik (do-re-mi-sol-la), dibuat 4 naik lalu 4 turun
-      // mirip pola bel pengumuman stasiun yang diperpanjang.
-      const up   = [523.25, 587.33, 659.25, 783.99];          // C5 D5 E5 G5 — naik
-      const down = [783.99, 659.25, 587.33, 523.25];          // G5 E5 D5 C5 — turun
+      const up   = [523.25, 587.33, 659.25, 783.99];
+      const down = [783.99, 659.25, 587.33, 523.25];
       const seq  = [...up, ...down];
-      const step = 0.26; // jarak antar nada
+      const step = 0.26;
       seq.forEach((freq, i) => {
-        const vol = i < 4 ? 0.26 : 0.24; // sedikit lebih pelan di bagian turun
+        const vol = i < 4 ? 0.26 : 0.24;
         chime(t0 + i * step, freq, vol, 0.62);
       });
     };
 
-    // Android WebView: setMediaPlaybackRequiresUserGesture(false) tidak unlock
-    // AudioContext (hanya berlaku untuk <audio>/<video>). Paksa resume() dulu,
-    // lalu langsung fire kalau berhasil; fallback pointerdown kalau masih suspended.
-    ctx.resume().then(() => {
-      if (ctx.state === 'running') {
+    // Coba resume dulu (wajib di Android WebView & mobile browser)
+    if(ctx.state === 'suspended'){
+      ctx.resume().then(()=>{
+        // Berhasil resume langsung: mainkan
         fire();
-      } else {
+      }).catch(()=>{
+        // Fallback: tunggu interaksi user pertama
         const resumeOnce = () => { ctx.resume().then(fire); document.removeEventListener('pointerdown', resumeOnce); };
         document.addEventListener('pointerdown', resumeOnce, { once: true });
-      }
-    }).catch(() => {
-      // resume() gagal → tunggu tap
-      const resumeOnce = () => { ctx.resume().then(fire); document.removeEventListener('pointerdown', resumeOnce); };
-      document.addEventListener('pointerdown', resumeOnce, { once: true });
-    });
+      });
+    } else {
+      fire();
+    }
   } catch(e) {}
 }
 playStationBell();
@@ -8615,66 +8627,6 @@ function logServiceNow(){
   showToast('Servis berhasil dicatat!');
   renderMaintHistory(hist); updateMaintModalStatus(); updateMaintenanceCard();
 }
-// ════════════════════════════════════════
-// ── VOICE READOUT ──
-// ════════════════════════════════════════
-let _voiceTimer = null;
-let _voiceEnabled = localStorage.getItem('voice_enabled') === '1';
-
-function initVoiceReadout(){
-  updateVoiceToggleUI();
-  if(_voiceEnabled) scheduleVoice();
-}
-
-function updateVoiceToggleUI(){
-  const btn = document.getElementById('voiceToggleBtn');
-  const txt = document.getElementById('voiceToggleTxt');
-  if(!btn) return;
-  btn.className = 'voice-toggle' + (_voiceEnabled ? ' on' : '');
-  if(txt) txt.textContent = _voiceEnabled ? 'SUARA ON' : 'SUARA OFF';
-}
-
-function toggleVoiceReadout(){
-  // Di Android native, TTS selalu tersedia via Java bridge
-  // Di browser, cek Web SpeechSynthesis
-  if(!IS_NATIVE_ANDROID && !window.speechSynthesis){
-    showToast('Browser tidak mendukung Web Speech API');
-    return;
-  }
-  _voiceEnabled = !_voiceEnabled;
-  localStorage.setItem('voice_enabled', _voiceEnabled ? '1' : '0');
-  updateVoiceToggleUI();
-  if(_voiceEnabled){
-    scheduleVoice();
-    showToast('🎙️ Voice readout aktif');
-  } else {
-    clearTimeout(_voiceTimer);
-    _voiceTimer = null;
-    stopSpeak();
-    showToast('🔇 Voice readout nonaktif');
-  }
-}
-
-function scheduleVoice(){
-  clearTimeout(_voiceTimer);
-  if(!_voiceEnabled) return;
-  const min = parseFloat(localStorage.getItem('voice_interval_min')) || 10;
-  _voiceTimer = setTimeout(()=>{ speakStatus(); scheduleVoice(); }, min * 60000);
-}
-
-function speakStatus(){
-  if(!_voiceEnabled || !isConnected) return;
-  if((motoData.spd||0) < 3) return; // hanya saat berkendara
-  const items = (localStorage.getItem('voice_items')||'speed,soc,range').split(',');
-  const parts = [];
-  if(items.includes('speed') && motoData.spd!=null)   parts.push(`Kecepatan ${motoData.spd} kilo per jam`);
-  if(items.includes('soc')   && motoData.soc!=null)   parts.push(`Baterai ${motoData.soc} persen`);
-  if(items.includes('range') && motoData.range!=null)  parts.push(`Sisa jarak ${Math.round(motoData.range)} kilo`);
-  if(items.includes('trip')  && motoData.trip!=null)   parts.push(`Trip ${motoData.trip.toFixed(1)} kilo`);
-  if(!parts.length) return;
-  speakText(parts.join('. '));
-} // [FIX5] tutup speakStatus — sebelumnya hilang sehingga monitorIdleDrain ikut masuk ke dalam scope-nya
-
 // ════════════════════════════════════════
 // ── IDLE DRAIN ALERT ──
 // ════════════════════════════════════════
