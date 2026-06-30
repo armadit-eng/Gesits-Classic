@@ -2137,7 +2137,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
     </div>
     <div class="uuid-tip">💡 Database SPKLU jauh lebih lengkap dibanding sebelumnya. Daftar gratis di <b>openchargemap.org/site/develop/api</b> → generate API key → tempel di sini. Tanpa key tetap bisa jalan (kuota publik terbatas), dengan key lebih stabil & banyak request.</div>
     <hr class="modal-sep">
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px">🗺️ Resolusi Snapshot AT+MAPS</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">🗺️ Resolusi Snapshot Maps</div>
     <div style="margin:9px 0 12px">
       <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Preset</div>
       <div class="preset-row" id="snapPresetBtns"></div>
@@ -2150,10 +2150,10 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <label>Tinggi (px)</label>
       <input id="inSnapH" type="number" step="1" min="64" max="1024" inputmode="numeric" placeholder="220">
     </div>
-    <div class="uuid-tip" id="snapSizeHint">💡 Ukuran lebih besar = gambar lebih detail tapi kualitas JPEG otomatis diturunkan supaya tetap muat di bawah <b>7000 karakter</b> (batas data <code>AT+MAPS</code>). Layar motor kecil → 350×220 biasanya sudah cukup tajam; layar lebih besar bisa naikkan ukuran.</div>
+    <div class="uuid-tip" id="snapSizeHint">💡 Ukuran lebih besar = gambar lebih detail tapi kualitas JPEG otomatis diturunkan supaya tetap muat di bawah <b>7000 karakter</b> (batas data <code>Maps</code>). Layar motor kecil → 350×220 biasanya sudah cukup tajam; layar lebih besar bisa naikkan ukuran.</div>
     <hr class="modal-sep">
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px">📟 Tampilan Layar Dashboard (AT+NAV)</div>
-    <div class="uuid-tip" style="margin-bottom:10px">💡 Data yang di-toggle aktif akan ditampilkan bergantian di layar motor lewat <code>AT+NAV</code>, sesuai interval di bawah. Saat navigasi aktif, nama jalan ikut masuk ke giliran yang sama.</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">📟 Tampilan Layar Dashboard (Navigasi)</div>
+    <div class="uuid-tip" style="margin-bottom:10px">💡 Data yang di-toggle aktif akan ditampilkan bergantian di layar motor lewat <code>Navigasi</code>, sesuai interval di bawah. Saat navigasi aktif, nama jalan ikut masuk ke giliran yang sama.</div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:2px 12px;margin-bottom:10px">
       <div class="dash-toggle-row">
         <span class="dash-toggle-label">🛣️ Sisa Jarak (Range)</span>
@@ -2179,6 +2179,18 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
         <span class="dash-toggle-label">🌤️ Saran Cuaca Rider</span>
         <label class="dash-switch"><input type="checkbox" id="dashTogCuaca"><span class="dash-switch-track"></span></label>
       </div>
+      <div class="dash-toggle-row">
+        <span class="dash-toggle-label">📍 Nama Lokasi (Free Ride)</span>
+        <label class="dash-switch"><input type="checkbox" id="dashTogLokasi"><span class="dash-switch-track"></span></label>
+      </div>
+      <div class="dash-toggle-row">
+        <span class="dash-toggle-label">✏️ Teks Custom</span>
+        <label class="dash-switch"><input type="checkbox" id="dashTogCustom" onchange="document.getElementById('customTextField').style.display=this.checked?'block':'none'"><span class="dash-switch-track"></span></label>
+      </div>
+    </div>
+    <div class="uuid-field" id="customTextField" style="display:none">
+      <label>Teks yang ditampilkan ke layar motor</label>
+      <input id="inCustomNavText" type="text" maxlength="60" placeholder="Contoh: Hati-hati di jalan!">
     </div>
     <div class="uuid-tip" style="margin-bottom:10px">💡 Teks cuaca &gt;20 karakter otomatis dipecah jadi 2 slot rotasi, potong di batas kata.</div>
     <div class="uuid-field">
@@ -2251,9 +2263,14 @@ let SNAP_H = parseInt(localStorage.getItem('snap_h')) || 220;
 // ── DASHBOARD ROTATION (AT+NAV multi-data) ──
 let DASH_ROTATE_SEC = parseInt(localStorage.getItem('dash_rotate_sec')) || 5;
 let DASH_TOGGLES = (()=>{
-  try{ return JSON.parse(localStorage.getItem('dash_toggles')) || {range:true, trip:true, energi:false, efisiensi:false, co2:false, cuaca:false}; }
-  catch(e){ return {range:true, trip:true, energi:false, efisiensi:false, co2:false, cuaca:false}; }
+  try{ return JSON.parse(localStorage.getItem('dash_toggles')) || {range:true, trip:true, energi:false, efisiensi:false, co2:false, cuaca:false, lokasi:false, custom:false}; }
+  catch(e){ return {range:true, trip:true, energi:false, efisiensi:false, co2:false, cuaca:false, lokasi:false, custom:false}; }
 })();
+let CUSTOM_NAV_TEXT = localStorage.getItem('custom_nav_text') || '';
+
+// Nama lokasi terkini (reverse geocode) — dikirim ke AT+NAV kalau toggle lokasi aktif & free ride
+let _currentLocationName = '';
+let _lastGeocodeTime = 0;
 
 // Mood cuaca terakhir (set oleh fetchHomeWeather) — dikirim ke AT+NAV kalau toggle cuaca aktif
 let _weatherMoodText = '';
@@ -2345,6 +2362,16 @@ window.onBtReconnected = function() {
   }, 2000);
   log('✅ Motor tersambung kembali otomatis','sys');
   showToast('✅ Motor tersambung kembali');
+
+  // Auto-nyalakan layar agar AT+MAPS bisa lanjut stream.
+  // WebView JS di-pause Android saat layar mati, jadi screenshot canvas
+  // untuk AT+MAPS butuh layar tetap nyala. navigator.wakeLock browser API
+  // TIDAK bisa menyalakan layar yang sudah mati, jadi pakai bridge Java.
+  if(IS_NATIVE_ANDROID){
+    try{ Android.wakeScreen(); }catch(e){}
+  } else {
+    try{ acquireWakeLock(); }catch(e){}
+  }
 };
 
 // ── Dipanggil Java: sedang auto-connect saat app dibuka ──
@@ -2892,7 +2919,7 @@ function updateRidingScore(){
 
   // Hitung score (0-100)
   const n = ridingScoreData.samples;
-  if(n < 5) return; // tunggu data cukup
+  if(n < 3) return; // tunggu data cukup (3 sample ≈ 1.5 detik)
 
   const ecoRatio   = 1 - (ridingScoreData.ecoViolations / n);
   const brakeRatio = 1 - Math.min(ridingScoreData.hardBrakes / (n*0.05), 1);
@@ -2911,7 +2938,7 @@ function updateRidingScore(){
 
 function calcFinalRidingScore(){
   const n = ridingScoreData.samples;
-  if(n < 5) return null;
+  if(n < 3) return null;
   const ecoRatio   = 1 - (ridingScoreData.ecoViolations / n);
   const brakeRatio = 1 - Math.min(ridingScoreData.hardBrakes / (n*0.05), 1);
   const regenRatio = Math.min(ridingScoreData.regenEvents / (n*0.1), 1);
@@ -3613,7 +3640,7 @@ function applyTripBaselineReset(){
   updateTripVal();
   updateRangeEstimate();
   updateSocBar(motoData.soc);
-  updateChargingEstimate(motoData.ibat, motoData.soc);
+  updateChargingEstimate();
   updateSmartAlert();
   updateMaintenanceCard();
   renderEfficiencyTrend();
@@ -3633,8 +3660,9 @@ let _telemActiveTab = 'spd';
 
 function startTelemLogger(){
   if(_telemTimer) return;
+  log('Telem logger dimulai, buffer awal: '+_telemBuffer.length,'sys');
   _telemTimer = setInterval(()=>{
-    if(!isConnected || motoData.spd < 1) return;
+    if(!isConnected) return; // tetap rekam meski motor sesaat berhenti (lampu merah dll)
     const pw = (motoData.vbat && motoData.ibat != null) ? motoData.vbat * motoData.ibat : 0;
     const isRegen = pw < 0;
     _telemBuffer.push([
@@ -3647,6 +3675,7 @@ function startTelemLogger(){
     if(_telemBuffer.length > 3600) _telemBuffer.splice(0, _telemBuffer.length - 3600);
     if(_telemBuffer.length % 10 === 0){
       try{ localStorage.setItem('trip_telem', JSON.stringify(_telemBuffer)); }catch(e){}
+      log('Telem buffer: '+_telemBuffer.length+' sample','sys');
     }
   }, 2000);
 }
@@ -3833,6 +3862,9 @@ function resetTrip(){
     // Energi: selalu pakai Σ P×t (real-time integration)
     const finalEnergy = tripEnergyWh;
     const eff = (finalEnergy > 0 && dist > 0.3) ? (finalEnergy/dist) : null;
+    const finalScore = calcFinalRidingScore();
+    log('Riding score samples='+ridingScoreData.samples+' → score='+finalScore, 'sys');
+    log('Telem buffer saat save: '+_telemBuffer.length+' sample', 'sys');
     saveTripToHistory({
       date: new Date().toISOString(),
       distance: dist,
@@ -3847,7 +3879,7 @@ function resetTrip(){
       maxRegenW: tripMaxRegenW,
       maxPowerW: tripMaxPowerW,
       chargeWh: tripChargeWh,
-      ridingScore: calcFinalRidingScore(),
+      ridingScore: finalScore,
       costIDR: calcTripCost(finalEnergy),
       path: simplifyPath(tripPath),
       telem: _telemBuffer.length > 360
@@ -4297,6 +4329,7 @@ function parseResponse(raw){
         }
       }
       updateLivePowerSummary(); updateBattPower(); updateRangeEstimate();
+      updateChargingEstimate(); // panggil tiap kali IBAT update — bukan cuma saat reset trip
       if(document.getElementById('screen-diagnosis').classList.contains('active')) drawChart();
       break;
     case 'CBAT':
@@ -4427,6 +4460,19 @@ function startTripRangeSender(){
 }
 function stopTripRangeSender(){ if(tripRangeTimer){clearInterval(tripRangeTimer);tripRangeTimer=null;} }
 
+// ── Reverse geocode untuk AT+NAV nama lokasi (free ride) ──
+async function updateCurrentLocationName(lat, lng){
+  try{
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=id&zoom=14`;
+    const r = await fetch(url, {headers:{'User-Agent':'GesitsDashboard/1.0'}});
+    const d = await r.json();
+    const addr = d.address || {};
+    const name = addr.suburb || addr.village || addr.town ||
+                 addr.city_district || addr.county || addr.city || '';
+    if(name) _currentLocationName = name;
+  }catch(e){ /* diam-diam gagal */ }
+}
+
 // ── AT+NAV: rotasi multi-data layar dashboard (Range/Trip/Energi/Efisiensi/CO2 + nama jalan saat navigasi) ──
 let dashRotateTimer=null, dashRotateIdx=0;
 
@@ -4455,6 +4501,14 @@ function getDashRotationItems(){
   // Cuaca — split di batas kata kalau > 20 char (maks jadi 2 slot rotasi)
   if(DASH_TOGGLES.cuaca && _weatherMoodText){
     splitNavText(_weatherMoodText).forEach(part => items.push(part));
+  }
+  // Nama lokasi GPS terkini — hanya saat free ride (navigasi TIDAK aktif)
+  if(DASH_TOGGLES.lokasi && !navActive && _currentLocationName){
+    splitNavText(_currentLocationName).forEach(part => items.push(part));
+  }
+  // Teks custom dari user
+  if(DASH_TOGGLES.custom && CUSTOM_NAV_TEXT){
+    splitNavText(CUSTOM_NAV_TEXT).forEach(part => items.push(part));
   }
   // Saat navigasi aktif, nama jalan yg sedang dilalui ikut masuk giliran yang sama
   // splitNavText memastikan teks > 20 char dipotong di batas kata (maks 2 slot)
@@ -5045,6 +5099,11 @@ function initMap(){
         // Marker selalu update koordinat — Mapbox otomatis render di posisi benar di peta
       } else if(!userPannedMap){
         mapInstance.easeTo({center:[userLng,userLat],duration:600});
+        // Update nama lokasi tiap 60 detik saat free ride (hemat quota Nominatim)
+        if(DASH_TOGGLES.lokasi && isConnected && Date.now()-_lastGeocodeTime > 60000){
+          _lastGeocodeTime = Date.now();
+          updateCurrentLocationName(userLat, userLng);
+        }
       }
     }, err=>{
       log('GPS error: '+err.message,'err');
@@ -6464,6 +6523,10 @@ function openSettings(){
   document.getElementById('dashTogEfisiensi').checked=!!DASH_TOGGLES.efisiensi;
   document.getElementById('dashTogCo2').checked=!!DASH_TOGGLES.co2;
   document.getElementById('dashTogCuaca').checked=!!DASH_TOGGLES.cuaca;
+  document.getElementById('dashTogLokasi').checked=!!DASH_TOGGLES.lokasi;
+  document.getElementById('dashTogCustom').checked=!!DASH_TOGGLES.custom;
+  document.getElementById('inCustomNavText').value=CUSTOM_NAV_TEXT;
+  document.getElementById('customTextField').style.display = DASH_TOGGLES.custom ? 'block' : 'none';
   document.getElementById('inDashRotateSec').value=DASH_ROTATE_SEC;
   renderSnapPresets();
   pickProvider(MAP_PROVIDER);
@@ -6535,6 +6598,8 @@ function saveSettings(){
     efisiensi: document.getElementById('dashTogEfisiensi').checked,
     co2:       document.getElementById('dashTogCo2').checked,
     cuaca:     document.getElementById('dashTogCuaca').checked,
+    lokasi:    document.getElementById('dashTogLokasi').checked,
+    custom:    document.getElementById('dashTogCustom').checked,
   };
   let dashRotateSec = parseInt(document.getElementById('inDashRotateSec').value)||5;
   dashRotateSec = Math.min(60, Math.max(2, dashRotateSec));
@@ -6574,6 +6639,8 @@ function saveSettings(){
   localStorage.setItem('ref_wh_km',refWh);
   localStorage.setItem('dash_toggles',JSON.stringify(dashToggles));
   localStorage.setItem('dash_rotate_sec',dashRotateSec);
+  CUSTOM_NAV_TEXT = document.getElementById('inCustomNavText').value.trim();
+  localStorage.setItem('custom_nav_text', CUSTOM_NAV_TEXT);
   socAlarmThreshold=socAlarm; localStorage.setItem('soc_alarm',socAlarm); socAlarmFired=false;
   log('Settings disimpan ✓','sys');
   closeModal('settingsModal');
@@ -6925,9 +6992,9 @@ async function shareTrip(i){
       reader.onloadend = ()=>{
         const base64 = reader.result.split(',')[1];
         try{
-          Android.shareImage(base64, 'gesits-trip-'+i+'.png', 'GESITS Trip Summary');
+          Android.sharePng(base64, 'gesits-trip-'+i+'.png', 'GESITS Trip Summary');
         } catch(e){
-          try{ Android.exportFile('gesits-trip-'+i+'.png', atob(base64).split('').map(c=>c.charCodeAt(0)), 'image/png'); }catch(e2){}
+          showToast('Gagal share gambar: '+e.message);
         }
       };
       reader.readAsDataURL(blob);
@@ -6955,11 +7022,10 @@ async function saveTripPng(i){
       reader.onloadend = ()=>{
         const base64 = reader.result.split(',')[1];
         try{
-          // savePng ke gallery/Downloads via Java bridge
           Android.savePng(base64, 'gesits-trip-'+i+'.png');
-          showToast('✅ Tersimpan ke galeri / Downloads');
+          showToast('✅ Tersimpan ke galeri');
         } catch(e){
-          try{ Android.exportFile('gesits-trip-'+i+'.png', atob(base64).split('').map(c=>c.charCodeAt(0)), 'image/png'); }catch(e2){}
+          showToast('Gagal menyimpan: '+e.message);
         }
       };
       reader.readAsDataURL(blob);
