@@ -1779,7 +1779,7 @@ body.nav-fullscreen #screen-navigasi { height:100dvh!important; }
       <div class="telem-tooltip" id="telemTooltip"></div>
       <div class="telem-no-data" id="telemNoData" style="display:none">
         <div style="font-size:26px">📊</div>
-        <div>Belum ada data telemetri.<br>Mulai trip lalu reset untuk merekam.</div>
+        <div>Belum ada data telemetri.<br>Trip lama (sebelum update ini) gak kerekam — jalanin & selesaikan 1 trip baru dulu.</div>
       </div>
     </div>
     <div class="telem-axis-x" id="telemAxisX"></div>
@@ -3572,6 +3572,21 @@ function updateLivePowerSummary(){
     ? tripRegenWh.toFixed(0)+' Wh (maks '+tripMaxRegenW.toFixed(0)+' W)'
     : '— Wh (maks — W)';
   if(el3) el3.textContent = tripChargeWh > 0 ? tripChargeWh.toFixed(0)+' Wh' : '— Wh';
+  // Delta SOC trip berjalan — turun dari tripStartSoc ke SOC sekarang
+  const socValEl = document.getElementById('socDeltaLiveVal');
+  const socBarEl = document.getElementById('socDeltaLiveBar');
+  if(socValEl && socBarEl){
+    if(tripStartSoc!==null && motoData.soc!==null && motoData.soc!==undefined){
+      const delta = Math.max(0, tripStartSoc - motoData.soc);
+      socValEl.textContent = delta>0 ? '-'+delta.toFixed(0)+'% ('+tripStartSoc.toFixed(0)+'% → '+motoData.soc.toFixed(0)+'%)' : '0%';
+      // Lebar bar relatif ke SOC awal trip (bukan 100%) biar keliatan jelas walau trip pendek
+      const pct = tripStartSoc>0 ? Math.min(100,(delta/tripStartSoc)*100) : 0;
+      socBarEl.style.width = pct+'%';
+    } else {
+      socValEl.textContent = '—';
+      socBarEl.style.width = '0%';
+    }
+  }
 }
 
 // ── ENERGY / RANGE ESTIMATION ──
@@ -3782,16 +3797,25 @@ function _doRenderTelemChart(){
   const dateEl  = document.getElementById('telemTripDate');
   if(!canvas) return;
 
-  // Cari data: trip history terakhir yg punya telem, atau buffer aktif
+  // Cari data: prioritaskan trip yang SEDANG berjalan (live buffer) kalau lagi
+  // connect & riding — biar chart update real-time. Kalau nggak lagi riding,
+  // cari trip histori TERAKHIR yang beneran punya data telem (bukan asal
+  // hist[0], karena trip-trip lama sebelum fitur ini ada gak punya field telem).
   let data = null, tripDate = '';
-  const hist = getTripHistory();
-  if(hist.length && hist[0].telem && hist[0].telem.length > 2){
-    data = hist[0].telem;
-    const d = new Date(hist[0].date);
-    tripDate = d.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-  } else if(_telemBuffer.length > 2){
+  if(isConnected && _telemBuffer.length > 2){
     data = _telemBuffer;
     tripDate = 'Trip berjalan';
+  } else {
+    const hist = getTripHistory();
+    const withTelem = hist.find(t => t.telem && t.telem.length > 2);
+    if(withTelem){
+      data = withTelem.telem;
+      const d = new Date(withTelem.date);
+      tripDate = d.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    } else if(_telemBuffer.length > 2){
+      data = _telemBuffer;
+      tripDate = 'Trip terakhir (belum tersimpan)';
+    }
   }
 
   if(dateEl) dateEl.textContent = tripDate;
@@ -7200,6 +7224,7 @@ async function _renderTripCanvas(i, callback){
     ['Energi Regen',        t.regenWh    ? t.regenWh.toFixed(0)+' Wh'       : '0 Wh'],
     ['Daya Regen Maks',     t.maxRegenW  ? t.maxRegenW.toFixed(0)+' W'      : '—'],
     ['Energi Charge',       t.chargeWh   ? t.chargeWh.toFixed(0)+' Wh'      : '0 Wh'],
+    ['🔋 Delta SOC',        (t.socStart!=null&&t.socEnd!=null) ? '-'+Math.max(0,t.socStart-t.socEnd).toFixed(0)+'% ('+t.socStart.toFixed(0)+'→'+t.socEnd.toFixed(0)+'%)' : '—'],
     ['🌱 CO₂ Dihemat',      co2Saved     ? (co2Saved>=1000?(co2Saved/1000).toFixed(2)+' kg':co2Saved.toFixed(0)+' g') : '—'],
     ['💰 Biaya Listrik',    t.energyWh>0 ? 'Rp '+Math.round((t.costIDR||((t.energyWh/1000)*1447))).toLocaleString('id-ID') : '—'],
     ['🏆 Riding Score',     t.ridingScore!=null ? t.ridingScore+'/100' : '—'],
@@ -7346,6 +7371,7 @@ function renderTripHistory(){
         <div><span class="trip-item-lbl">Regen Maks</span>${t.maxRegenW?.toFixed(0)||'—'} W</div>
         <div><span class="trip-item-lbl">Daya Maks</span>${t.maxPowerW?.toFixed(0)||'—'} W</div>
         <div><span class="trip-item-lbl">Charge</span>${t.chargeWh?.toFixed(0)||'—'} Wh</div>
+        <div><span class="trip-item-lbl">🔋 Delta SOC</span>${(t.socStart!=null&&t.socEnd!=null)?'-'+Math.max(0,t.socStart-t.socEnd).toFixed(0)+'% ('+t.socStart.toFixed(0)+'→'+t.socEnd.toFixed(0)+')':'—'}</div>
         <div style="grid-column:span 2;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-top:2px">
           <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">💰 Biaya Listrik</span>
           <span style="font-size:16px;font-weight:800;color:#ffa726">${t.costIDR ? 'Rp '+Math.round(t.costIDR).toLocaleString('id-ID') : (t.energyWh>0 ? 'Rp '+Math.round((t.energyWh/1000)*1447).toLocaleString('id-ID') : '—')}</span>
