@@ -4580,21 +4580,14 @@ async function doHudSearch(query){
 
 function selectHudDest(lat, lng, label){
   toggleHudSearch();
-  destLat   = parseFloat(lat);
-  destLng   = parseFloat(lng);
-  destLabel = label;
-  // Pindah ke tab navigasi
+  // Pindah ke tab navigasi (di landscape ini no-op karena screen-navigasi
+  // sudah tampil terus, tapi tetap dipanggil buat jaga state kalau balik portrait)
   switchTab('navigasi', null);
   setTimeout(()=>{
-    if(mapInstance){
-      mapInstance.flyTo({center:[destLng,destLat],zoom:14,duration:600});
-    }
-    // Fetch route kalau sudah ada posisi user
-    if(userLat && userLng){
-      fetchRoute(userLng, userLat, destLng, destLat, false);
-    } else {
-      showToast('⚠️ GPS belum aktif, tidak bisa hitung rute');
-    }
+    // Pakai setDestination() yang sama dengan search biasa & klik-on-map:
+    // ini yang bikin marker pin + flyTo + fetch rute sekaligus.
+    document.getElementById('navSearchInput').value = label;
+    setDestination(parseFloat(lng), parseFloat(lat), label);
   }, 500);
 }
 
